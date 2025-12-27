@@ -1,0 +1,6 @@
+node_modules/
+.env
+# 
+tdlib/
+# file thuc thi tdlib tren macOS
+libtdjson.dylib
