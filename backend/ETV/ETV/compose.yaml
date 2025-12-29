@@ -1,0 +1,84 @@
+services:
+  # MySQL Database Service
+  mysql:
+    image: mysql:8.0-debian
+    container_name: etv_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - etv_network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  # ASP.NET Core API Service - Production only
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: etv_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      ConnectionStrings__DefaultConnection: ${DATABASE_CONNECTION_STRING}
+      JwtSettings__SecretKey: ${JWT__SECRET_KEY}
+      JwtSettings__Issuer: ${JWT__ISSUER}
+      JwtSettings__Audience: ${JWT__AUDIENCE}
+      JwtSettings__ExpirationMinutes: ${JWT__EXPIRATION_MINUTES}
+    ports:
+      - "${API_PORT}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - etv_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 5
+      interval: 10s
+
+  # Database Migration Service
+  db-migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.Migration
+    container_name: etv_migrator
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      ConnectionStrings__DefaultConnection: ${DATABASE_CONNECTION_STRING}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - etv_network
+    profiles:
+      - migrate
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  etv_network:
+    driver: bridge
