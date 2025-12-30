@@ -1,0 +1,4 @@
+﻿thêm authorization filter, kiểm tra user có quyền truy cập team không,
+    có được thêm xóa sửa team không     
+    có được thêm xóa sửa item không
+    với các endpoint yêu cầu 2 id (teamid, itemid, userid) cần kiểm tra xem id đó có thuộc về team hay không
