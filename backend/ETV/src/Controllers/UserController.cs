@@ -12,7 +12,7 @@ namespace ETV.Controllers
     /// Handles user profile and key material management (authentication moved to AuthController)
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;

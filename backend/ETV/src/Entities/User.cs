@@ -10,5 +10,5 @@ public class User
     public string KDFSalt { get; set; }
     public List<Team> Teams { get; set; }
     public List<TeamMember> TeamMembers { get; set; }
-
+    public List<VaultItem> VaultItems { get; set; } = new();
 }

@@ -141,7 +141,11 @@ namespace ETV.src.Data
 
                 entity.Property(v => v.TeamId)
                     .HasColumnType("BINARY(16)")
-                    .IsRequired();
+                    .IsRequired(false);
+
+                entity.Property(v => v.UserId)
+                    .HasColumnType("BINARY(16)")
+                    .IsRequired(false);
 
                 entity.Property(v => v.EncryptedBlob)
                     .IsRequired()
@@ -159,14 +163,28 @@ namespace ETV.src.Data
                     .HasColumnType("DATETIME(6)")
                     .ValueGeneratedOnAddOrUpdate();
 
-                // Configure foreign key
+                // Configure foreign keys
                 entity.HasOne(v => v.Team)
                     .WithMany(t => t.VaultItems)
                     .HasForeignKey(v => v.TeamId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired(false);
 
-                // Create index for queries
+                entity.HasOne(v => v.User)
+                    .WithMany(u => u.VaultItems)
+                    .HasForeignKey(v => v.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired(false);
+
+                // Add check constraint using ToTable: either TeamId or UserId must be set, but not both
+                entity.ToTable(t => t.HasCheckConstraint(
+                    "CK_VaultItem_TeamOrUser",
+                    "(TeamId IS NOT NULL AND UserId IS NULL) OR (TeamId IS NULL AND UserId IS NOT NULL)"
+                ));
+
+                // Create indexes for queries
                 entity.HasIndex(v => v.TeamId);
+                entity.HasIndex(v => v.UserId);
             });
         }
     }

@@ -75,10 +75,11 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
     /// <response code="200">Item retrieved successfully</response>
     /// <response code="401">Unauthorized - requires valid JWT token</response>
     /// <response code="403">Forbidden - user is not team member</response>
-    /// <response code="404">Team or item not found</response>
+    /// <response code="404">Team or item not found, or item does not belong to team</response>
     [HttpGet("{itemId}")]
     [ValidateEntityExists<Team>("teamId")]
     [ValidateEntityExists<VaultItem>("itemId")]
+    [ValidateEntityRelation<Team, VaultItem>("teamId", "itemId")]
     [ProducesResponseType(typeof(GetItemResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetItem([FromRoute] Guid teamId, [FromRoute] Guid itemId)
     {
@@ -92,12 +93,6 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
         }
 
         var item = await itemService.GetItemAsync(itemId);
-
-        // Kiểm tra item có thuộc team này không
-        if (item.TeamId != teamId)
-        {
-            return NotFound(new { message = "Item not found in this team." });
-        }
 
         return Ok(new
         {
@@ -166,10 +161,11 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
     /// <response code="400">Invalid request data</response>
     /// <response code="401">Unauthorized - requires valid JWT token</response>
     /// <response code="403">Forbidden - user is not team member</response>
-    /// <response code="404">Team or item not found</response>
+    /// <response code="404">Team or item not found, or item does not belong to team</response>
     [HttpPut("{itemId}")]
     [ValidateEntityExists<Team>("teamId")]
     [ValidateEntityExists<VaultItem>("itemId")]
+    [ValidateEntityRelation<Team, VaultItem>("teamId", "itemId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateItem([FromRoute] Guid teamId, [FromRoute] Guid itemId, [FromBody] UpdateItemRequest request)
     {
@@ -180,14 +176,6 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
         if (!await teamService.IsTeamMemberAsync(teamId, userId))
         {
             return Forbid();
-        }
-
-        var item = await itemService.GetItemAsync(itemId);
-
-        // Kiểm tra item có thuộc team này không
-        if (item.TeamId != teamId)
-        {
-            return NotFound(new { message = "Item not found in this team." });
         }
 
         await itemService.UpdateItemAsync(
@@ -213,10 +201,11 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
     /// <response code="200">Item deleted successfully</response>
     /// <response code="401">Unauthorized - requires valid JWT token</response>
     /// <response code="403">Forbidden - user is not team member</response>
-    /// <response code="404">Team or item not found</response>
+    /// <response code="404">Team or item not found, or item does not belong to team</response>
     [HttpDelete("{itemId}")]
     [ValidateEntityExists<Team>("teamId")]
     [ValidateEntityExists<VaultItem>("itemId")]
+    [ValidateEntityRelation<Team, VaultItem>("teamId", "itemId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DeleteItem([FromRoute] Guid teamId, [FromRoute] Guid itemId)
     {
@@ -227,14 +216,6 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
         if (!await teamService.IsTeamMemberAsync(teamId, userId))
         {
             return Forbid();
-        }
-
-        var item = await itemService.GetItemAsync(itemId);
-
-        // Kiểm tra item có thuộc team này không
-        if (item.TeamId != teamId)
-        {
-            return NotFound(new { message = "Item not found in this team." });
         }
 
         await itemService.DeleteItemAsync(itemId);

@@ -15,7 +15,7 @@ namespace ETV.Controllers
     /// Manages user registration, login, logout, and token refresh
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly UserService _userService;

@@ -8,7 +8,11 @@ public class CreateItemResponse
     public DateTime UpdatedAt { get; set; }
     public int KeyVersion { get; set; }
 }
-
+public class GetItemsResponse
+{
+    public int Count { get; set; }
+    public required List<GetItemResponse> Items { get; set; }
+}
 public class GetItemResponse
 {
     public Guid Id { get; set; }

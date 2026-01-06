@@ -4,6 +4,7 @@ using ETV.src.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETV.Migrations
 {
     [DbContext(typeof(AppDb))]
-    partial class AppDbModelSnapshot : ModelSnapshot
+    [Migration("20260106074230_add private item for user")]
+    partial class addprivateitemforuser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,6 +202,7 @@ namespace ETV.Migrations
                         .HasColumnType("int");
 
                     b.Property<byte[]>("TeamId")
+                        .IsRequired()
                         .HasColumnType("BINARY(16)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
@@ -208,6 +212,7 @@ namespace ETV.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTimeOffset>("UpdatedAt"));
 
                     b.Property<byte[]>("UserId")
+                        .IsRequired()
                         .HasColumnType("BINARY(16)");
 
                     b.HasKey("Id");
@@ -216,10 +221,7 @@ namespace ETV.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("VaultItems", t =>
-                        {
-                            t.HasCheckConstraint("CK_VaultItem_TeamOrUser", "(TeamId IS NOT NULL AND UserId IS NULL) OR (TeamId IS NULL AND UserId IS NOT NULL)");
-                        });
+                    b.ToTable("VaultItems");
                 });
 
             modelBuilder.Entity("ETV.src.Entities.RefreshToken", b =>
@@ -272,12 +274,14 @@ namespace ETV.Migrations
                     b.HasOne("Team", "Team")
                         .WithMany("VaultItems")
                         .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("User", "User")
-                        .WithMany("VaultItems")
+                        .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Team");
 
@@ -294,8 +298,6 @@ namespace ETV.Migrations
             modelBuilder.Entity("User", b =>
                 {
                     b.Navigation("TeamMembers");
-
-                    b.Navigation("VaultItems");
                 });
 #pragma warning restore 612, 618
         }

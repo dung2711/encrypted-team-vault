@@ -6,8 +6,10 @@ namespace ETV.Services;
 
 public class ItemService(AppDb context)
 {
+    #region Team Items
+
     /// <summary>
-    /// Tạo item mới
+    /// Tạo item mới cho team
     /// Client gửi: encrypted blob, encrypted item key, item_key_version
     /// </summary>
     public async Task<VaultItem> CreateItemAsync(Guid teamId, string encryptedBlob,
@@ -17,6 +19,7 @@ public class ItemService(AppDb context)
         {
             Id = Guid.NewGuid(),
             TeamId = teamId,
+            UserId = null,
             EncryptedBlob = encryptedBlob,
             EncryptedItemKey = encryptedItemKey,
             KeyVersion = keyVersion,
@@ -109,4 +112,99 @@ public class ItemService(AppDb context)
         context.VaultItems.Remove(item);
         await context.SaveChangesAsync();
     }
+
+    #endregion
+
+    #region Personal Items
+
+    /// <summary>
+    /// Tạo personal item cho user
+    /// </summary>
+    public async Task<VaultItem> CreatePersonalItemAsync(Guid userId, string encryptedBlob,
+        string encryptedItemKey, int keyVersion)
+    {
+        var item = new VaultItem
+        {
+            Id = Guid.NewGuid(),
+            TeamId = null,
+            UserId = userId,
+            EncryptedBlob = encryptedBlob,
+            EncryptedItemKey = encryptedItemKey,
+            KeyVersion = keyVersion,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        context.VaultItems.Add(item);
+        await context.SaveChangesAsync();
+        return item;
+    }
+
+    /// <summary>
+    /// Lấy tất cả personal items của user
+    /// </summary>
+    public async Task<List<VaultItem>> GetPersonalItemsAsync(Guid userId)
+    {
+        return await context.VaultItems
+            .Where(v => v.UserId == userId)
+            .OrderByDescending(v => v.UpdatedAt)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Lấy personal item theo ID
+    /// </summary>
+    public async Task<VaultItem> GetPersonalItemAsync(Guid itemId, Guid userId)
+    {
+        var item = await context.VaultItems
+            .FirstOrDefaultAsync(v => v.Id == itemId && v.UserId == userId);
+
+        if (item == null)
+        {
+            throw new NotFoundException("Personal item", itemId);
+        }
+
+        return item;
+    }
+
+    /// <summary>
+    /// Cập nhật personal item
+    /// </summary>
+    public async Task UpdatePersonalItemAsync(Guid itemId, Guid userId, string encryptedBlob,
+        string encryptedItemKey, int keyVersion)
+    {
+        var item = await context.VaultItems
+            .FirstOrDefaultAsync(v => v.Id == itemId && v.UserId == userId);
+
+        if (item == null)
+        {
+            throw new NotFoundException("Personal item", itemId);
+        }
+
+        item.EncryptedBlob = encryptedBlob;
+        item.EncryptedItemKey = encryptedItemKey;
+        item.KeyVersion = keyVersion;
+        item.UpdatedAt = DateTimeOffset.UtcNow;
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Xóa personal item
+    /// </summary>
+    public async Task DeletePersonalItemAsync(Guid itemId, Guid userId)
+    {
+        var item = await context.VaultItems
+            .FirstOrDefaultAsync(v => v.Id == itemId && v.UserId == userId);
+
+        if (item == null)
+        {
+            throw new NotFoundException("Personal item", itemId);
+        }
+
+        context.VaultItems.Remove(item);
+        await context.SaveChangesAsync();
+    }
+
+    #endregion
+
 }

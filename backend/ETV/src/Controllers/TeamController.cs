@@ -17,7 +17,7 @@ namespace ETV.Controllers
     /// All endpoints require JWT authentication and verify team membership before granting access.
     /// </remarks>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/teams")]
     [Authorize]
     public class TeamController(TeamService teamService, ItemService itemService, ILogger<TeamController> logger)
         : ControllerBase
@@ -166,17 +166,19 @@ namespace ETV.Controllers
         /// Only team admin can add members.
         /// </remarks>
         /// <param name="teamId">Team ID</param>
-        /// <param name="request">User ID and encrypted team key for the member</param>
+        /// <param name="memberId">User ID to add as member</param>
+        /// <param name="request">Encrypted team key for the member</param>
         /// <returns>Success message</returns>
         /// <response code="201">Member added successfully</response>
         /// <response code="400">Invalid request data or user already member</response>
         /// <response code="401">Unauthorized - requires valid JWT token</response>
         /// <response code="403">Forbidden - user is not team admin</response>
         /// <response code="404">Team or user not found</response>
-        [HttpPost("{teamId}/members")]
+        [HttpPost("{teamId}/members/{memberId}")]
         [ValidateEntityExists<Team>("teamId")]
+        [ValidateEntityExists<User>("memberId")]
         [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status201Created)]
-        public async Task<IActionResult> AddMember([FromRoute] Guid teamId, [FromBody] AddMemberRequest request)
+        public async Task<IActionResult> AddMember([FromRoute] Guid teamId, [FromRoute] Guid memberId, [FromBody] AddMemberRequest request)
         {
             // TODO: Lấy userId từ JWT token
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
@@ -192,16 +194,16 @@ namespace ETV.Controllers
 
             await teamService.AddMemberToTeamAsync(
                 teamId,
-                request.UserId,
+                memberId,
                 Role.Member,
                 request.EncryptedTeamKey,
                 currentKeyVersion
             );
 
-            logger.LogInformation($"User {request.UserId} added to team {teamId} by {userId}.");
+            logger.LogInformation($"User {memberId} added to team {teamId} by {userId}.");
 
             return Created(
-                new Uri($"{Request.Scheme}://{Request.Host}/api/teams/{teamId}/members/{request.UserId}"),
+                new Uri($"{Request.Scheme}://{Request.Host}/api/teams/{teamId}/members/{memberId}"),
                 new { message = "Member added successfully." }
             );
         }
@@ -217,9 +219,11 @@ namespace ETV.Controllers
         /// <response code="200">Member removed successfully</response>
         /// <response code="401">Unauthorized - requires valid JWT token</response>
         /// <response code="403">Forbidden - user is not team admin</response>
-        /// <response code="404">Team or member not found</response>
+        /// <response code="404">Team or member not found, or member does not belong to team</response>
         [HttpDelete("{teamId}/members/{userId}")]
         [ValidateEntityExists<Team>("teamId")]
+        [ValidateEntityExists<User>("userId")]
+        [ValidateEntityRelation<Team, TeamMember>("teamId", "userId")]
         [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> RemoveMember([FromRoute] Guid teamId, [FromRoute] Guid userId)
         {
