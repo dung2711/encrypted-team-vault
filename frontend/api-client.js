@@ -120,7 +120,7 @@ async function registerUser(username, email, password) {
  * Login user
  */
 async function loginUser(usernameOrEmail, password) {
-    console.log(`\n🔐 Logging in: ${usernameOrEmail}...`);
+    console.log(`\nLogging in: ${usernameOrEmail}...`);
 
     const response = await apiCall(`${API_BASE_URL}/Auth/login`, {
         method: 'POST',
@@ -130,7 +130,7 @@ async function loginUser(usernameOrEmail, password) {
         })
     });
 
-    console.log(`✅ Login successful! Token received.`);
+    console.log(`Login successful! Token received.`);
     
     return {
         token: response.token,
@@ -144,7 +144,7 @@ async function loginUser(usernameOrEmail, password) {
  * Get user key materials and decrypt private key
  */
 async function loadUserKeys(userId, token, password) {
-    console.log(`\n🔑 Loading user keys...`);
+    console.log(`\nLoading user keys...`);
 
     // Get key materials from server
     const keyMaterials = await apiCall(`${API_BASE_URL}/User/${userId}/key`, {
@@ -175,7 +175,7 @@ async function loadUserKeys(userId, token, password) {
         iv
     });
 
-    console.log(`✅ User keys loaded successfully`);
+    console.log(`User keys loaded successfully`);
 
     return { publicKey, privateKey };
 }
@@ -184,7 +184,7 @@ async function loadUserKeys(userId, token, password) {
  * Create a new team
  */
 async function createTeam(teamName, token, creatorPublicKey) {
-    console.log(`\n👥 Creating team: ${teamName}...`);
+    console.log(`\nCreating team: ${teamName}...`);
 
     // 1. Generate team key
     const teamKey = await genTeamKey();
@@ -204,7 +204,7 @@ async function createTeam(teamName, token, creatorPublicKey) {
         })
     });
 
-    console.log(`✅ Team created with ID: ${response.id}`);
+    console.log(`Team created with ID: ${response.id}`);
 
     return {
         teamId: response.id,
@@ -217,7 +217,7 @@ async function createTeam(teamName, token, creatorPublicKey) {
  * Get user's teams
  */
 async function getTeams(token) {
-    console.log(`\n📋 Getting user's teams...`);
+    console.log(`\nGetting user's teams...`);
 
     const response = await apiCall(`${API_BASE_URL}/Team`, {
         headers: {
@@ -225,7 +225,7 @@ async function getTeams(token) {
         }
     });
 
-    console.log(`✅ Found ${response.count} team(s)`);
+    console.log(`Found ${response.count} team(s)`);
     response.teams.forEach(team => {
         console.log(`   - ${team.name} (ID: ${team.id})`);
     });
@@ -237,7 +237,7 @@ async function getTeams(token) {
  * Add member to team
  */
 async function addMemberToTeam(teamId, memberUserId, teamKey, memberPublicKey, token) {
-    console.log(`\n➕ Adding member ${memberUserId} to team...`);
+    console.log(`\nAdding member ${memberUserId} to team...`);
 
     // Encrypt team key for the new member
     const encryptedTeamKey = await encryptTeamKey(teamKey, memberPublicKey);
@@ -253,14 +253,14 @@ async function addMemberToTeam(teamId, memberUserId, teamKey, memberPublicKey, t
         })
     });
 
-    console.log(`✅ Member added successfully`);
+    console.log(`Member added successfully`);
 }
 
 /**
  * Create vault item
  */
 async function createVaultItem(teamId, teamKey, itemData, token) {
-    console.log(`\n📦 Creating vault item...`);
+    console.log(`\nCreating vault item...`);
 
     // 1. Generate item key
     const itemKey = await genItemKey();
@@ -298,7 +298,7 @@ async function createVaultItem(teamId, teamKey, itemData, token) {
         })
     });
 
-    console.log(`✅ Item created with ID: ${response.id}`);
+    console.log(`Item created with ID: ${response.id}`);
 
     return response;
 }
@@ -307,7 +307,7 @@ async function createVaultItem(teamId, teamKey, itemData, token) {
  * Get vault item and decrypt
  */
 async function getVaultItem(teamId, itemId, teamKey, token) {
-    console.log(`\n🔓 Getting vault item ${itemId}...`);
+    console.log(`\nGetting vault item ${itemId}...`);
 
     const response = await apiCall(`${API_BASE_URL}/teams/${teamId}/items/${itemId}`, {
         headers: {
@@ -342,67 +342,3 @@ async function getVaultItem(teamId, itemId, teamKey, token) {
     return decryptedData;
 }
 
-// ============================================
-// Demo Workflow
-// ============================================
-
-async function main() {
-    try {
-        console.log('🚀 Starting Encrypted Team Vault Demo...\n');
-        console.log('='.repeat(60));
-
-        // Step 1: Register two users
-        const alice = await registerUser('alice', 'alice@example.com', 'password123');
-        const bob = await registerUser('bob', 'bob@example.com', 'password456');
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 2: Alice logs in
-        const aliceAuth = await loginUser('alice', 'password123');
-        const aliceKeys = await loadUserKeys(aliceAuth.userId, aliceAuth.token, 'password123');
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 3: Alice creates a team
-        const team = await createTeam('Engineering Team', aliceAuth.token, aliceKeys.publicKey);
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 4: Alice adds Bob to the team
-        await addMemberToTeam(team.teamId, bob.userId, team.teamKey, bob.publicKey, aliceAuth.token);
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 5: Alice creates a vault item (password)
-        const secretData = {
-            type: 'password',
-            title: 'Production Database',
-            username: 'admin',
-            password: 'SuperSecretPassword123!',
-            url: 'https://db.example.com',
-            notes: 'Main production database credentials'
-        };
-
-        const item = await createVaultItem(team.teamId, team.teamKey, secretData, aliceAuth.token);
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 6: Alice retrieves and decrypts the item
-        const decryptedItem = await getVaultItem(team.teamId, item.id, team.teamKey, aliceAuth.token);
-
-        console.log('\n' + '='.repeat(60));
-
-        // Step 7: Get Alice's teams
-        await getTeams(aliceAuth.token);
-
-        console.log('\n' + '='.repeat(60));
-        console.log('\n✨ Demo completed successfully!\n');
-
-    } catch (error) {
-        console.error('\n❌ Error:', error.message);
-        console.error(error);
-    }
-}
-
-// Run the demo
-main();
