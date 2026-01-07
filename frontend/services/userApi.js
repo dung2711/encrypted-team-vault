@@ -17,3 +17,12 @@ export const updateUserInfo = async (id, userInfo) => {
         return error.msg;
     }
 }
+
+export const getUserPublicKey = async (userId) => {
+    try {
+        const response = await apiClient.get(`/user/${userId}/publickey`);
+        return response.data;  // Returns { userId, publicKey }
+    } catch (error) {
+        return error.msg;
+    }
+}

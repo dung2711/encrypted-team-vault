@@ -11,7 +11,7 @@ export const createTeam = async (teamData) => {
 
 export const getTeams = async (userId) => {
     try {
-        const response = await apiClient.get(`/teams/${userId}`);
+        const response = await apiClient.get(`/teams/`);
         return response.data;
     } catch (error) {
         return error.msg;
@@ -20,7 +20,7 @@ export const getTeams = async (userId) => {
 
 export const getTeamById = async (teamId) => {
     try {
-        const response = await apiClient.get(`/teams/team/${teamId}`);
+        const response = await apiClient.get(`/teams/${teamId}`);
         return response.data;
     } catch (error) {
         return error.msg;
@@ -56,7 +56,7 @@ export const deleteTeam = async (teamId) => {
 
 export const getEncryptedTeamKey = async (teamId, memberId) => {
     try {
-        const response = await apiClient.get(`/teams/${teamId}/key/member/${memberId}`);
+        const response = await apiClient.get(`/teams/${teamId}/key`);
         return response.data;
     } catch (error) {
         return error.msg;
