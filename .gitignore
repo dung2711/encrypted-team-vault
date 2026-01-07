@@ -4,3 +4,5 @@ node_modules/
 tdlib/
 # file thuc thi tdlib tren macOS
 libtdjson.dylib
+package-lock.json
+package.json

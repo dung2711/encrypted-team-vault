@@ -20,6 +20,7 @@
   "homepage": "https://github.com/dung2711/encrypted-team-vault#readme",
   "dependencies": {
     "@peculiar/webcrypto": "^1.5.0",
-    "libsodium-wrappers": "^0.7.15"
+    "libsodium-wrappers": "^0.7.15",
+    "node-fetch": "^3.3.2"
   }
 }

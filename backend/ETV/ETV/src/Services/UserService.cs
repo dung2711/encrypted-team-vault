@@ -31,13 +31,13 @@ namespace ETV.src.Services
             {
                 throw new InvalidOperationException($"Email '{email}' already exists.");
             }
-
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 Username = username,
                 Email = email,
-                Password = password,
+                Password = hashedPassword,
                 PublicKey = publicKey,
                 EncryptedPrivateKey = encryptedPrivateKey,
                 KDFSalt = kdfSalt,
