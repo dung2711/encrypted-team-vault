@@ -128,7 +128,9 @@ namespace ETV.Controllers
                     Username = user.Username,
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
-                    ExpiresIn = expiresInSeconds
+                    ExpiresIn = expiresInSeconds,
+                    PublicKey = user.PublicKey,
+                    KDFSalt = user.KDFSalt
                 };
 
                 _logger.LogInformation("User {Username} logged in successfully.", request.Username);

@@ -31,29 +31,28 @@ namespace ETV.Controllers
 
 
         /// <summary>
-        /// Get user's encryption key materials
+        /// Get user's public key
         /// </summary>
         /// <remarks>
-        /// Returns the user's public key and KDF salt.
-        /// This allows clients to decrypt team keys and other encrypted data.
+        /// Returns the user's public key.
+        /// This allows other users to encrypt data for this user.
         /// </remarks>
         /// <param name="id">User ID</param>
-        /// <returns>User's key materials</returns>
-        /// <response code="200">Key materials retrieved successfully</response>
+        /// <returns>User's public key</returns>
+        /// <response code="200">Public key retrieved successfully</response>
         /// <response code="401">Unauthorized - requires valid JWT token</response>
         /// <response code="404">User not found</response>
         [Authorize]
-        [HttpGet("{id}/key")]
+        [HttpGet("{id}/publickey")]
         [ValidateEntityExists<User>("id")]
-        [ProducesResponseType(typeof(GetKeyMaterialsResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetKeyMaterials([FromRoute] Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPublicKey([FromRoute] Guid id)
         {
-            var keyMaterials = await _userService.GetKeyMaterialsAsync(id);
+            var user = await _userService.GetUserAsync(id);
 
             return Ok(new
             {
-                publicKey = keyMaterials.PublicKey,
-                kdfSalt = keyMaterials.KDFSalt
+                publicKey = user.PublicKey
             });
         }
 
