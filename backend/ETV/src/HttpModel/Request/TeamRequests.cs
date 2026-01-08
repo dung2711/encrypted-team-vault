@@ -23,3 +23,9 @@ public class TeamKeyUpdate
     public required string EncryptedTeamKey { get; set; }
     public int KeyVersion { get; set; }
 }
+
+public class UpdateMemberKeyRequest
+{
+    public required string EncryptedTeamKey { get; set; }
+    public int KeyVersion { get; set; }
+}
