@@ -337,7 +337,7 @@ async function getVaultItem(teamId, itemId, teamKey, token) {
 
     const decryptedData = JSON.parse(new TextDecoder().decode(decryptedBytes));
 
-    console.log(`✅ Item decrypted successfully:`, decryptedData);
+    console.log(`Item decrypted successfully:`, decryptedData);
 
     return decryptedData;
 }
