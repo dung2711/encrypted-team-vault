@@ -22,8 +22,6 @@ public class ChangePasswordRequest
     public required string NewPassword { get; set; }
     /// <summary>New public key (derived from new password on client)</summary>
     public required string PublicKey { get; set; }
-    /// <summary>New encrypted private key (re-encrypted with new password)</summary>
-    public required string EncryptedPrivateKey { get; set; }
     /// <summary>New KDF salt (regenerated on client)</summary>
     public required string KDFSalt { get; set; }
 }

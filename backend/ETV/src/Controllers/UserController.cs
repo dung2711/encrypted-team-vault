@@ -34,7 +34,7 @@ namespace ETV.Controllers
         /// Get user's encryption key materials
         /// </summary>
         /// <remarks>
-        /// Returns the user's public key, encrypted private key, and KDF salt.
+        /// Returns the user's public key and KDF salt.
         /// This allows clients to decrypt team keys and other encrypted data.
         /// </remarks>
         /// <param name="id">User ID</param>
@@ -53,7 +53,6 @@ namespace ETV.Controllers
             return Ok(new
             {
                 publicKey = keyMaterials.PublicKey,
-                encryptedPrivateKey = keyMaterials.EncryptedPrivateKey,
                 kdfSalt = keyMaterials.KDFSalt
             });
         }

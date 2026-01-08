@@ -61,7 +61,6 @@ namespace ETV.Controllers
                     request.Email,
                     request.Password,
                     request.PublicKey,
-                    request.EncryptedPrivateKey,
                     request.KDFSalt
                 );
 
@@ -294,10 +293,9 @@ namespace ETV.Controllers
                 }
 
                 if (string.IsNullOrWhiteSpace(request.PublicKey) ||
-                    string.IsNullOrWhiteSpace(request.EncryptedPrivateKey) ||
                     string.IsNullOrWhiteSpace(request.KDFSalt))
                 {
-                    return BadRequest(new { message = "Public key, encrypted private key, and KDF salt are required." });
+                    return BadRequest(new { message = "Public key and KDF salt are required." });
                 }
 
                 // Verify old password
@@ -313,7 +311,7 @@ namespace ETV.Controllers
 
                 // Update password and key materials
                 await _userService.UpdatePasswordAsync(userId, hashedPassword);
-                await _userService.UpdateAllKeyMaterialsAsync(userId, request.PublicKey, request.EncryptedPrivateKey, request.KDFSalt);
+                await _userService.UpdateAllKeyMaterialsAsync(userId, request.PublicKey, request.KDFSalt);
 
                 // Invalidate all refresh tokens (force re-login)
                 var userRefreshTokens = await _db.RefreshTokens
