@@ -119,6 +119,38 @@ namespace ETV.Controllers
             });
         }
 
+        /// <summary>Delete team</summary>
+        /// <remarks>
+        /// Permanently deletes a team and all associated data (members, items, keys).
+        /// Only team admin can delete the team.
+        /// This action cannot be undone.
+        /// </remarks>
+        /// <param name="teamId">Team ID</param>
+        /// <returns>Success message</returns>
+        /// <response code="200">Team deleted successfully</response>
+        /// <response code="401">Unauthorized - requires valid JWT token</response>
+        /// <response code="403">Forbidden - user is not team admin</response>
+        /// <response code="404">Team not found</response>
+        [HttpDelete("{teamId}")]
+        [ValidateEntityExists<Team>("teamId")]
+        [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> DeleteTeam([FromRoute] Guid teamId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            // Kiểm tra user có phải admin của team không
+            if (!await teamService.IsTeamAdminAsync(teamId, userId))
+            {
+                return Forbid();
+            }
+
+            await teamService.DeleteTeamAsync(teamId);
+
+            logger.LogInformation($"Team {teamId} deleted by user {userId}.");
+
+            return Ok(new { message = "Team deleted successfully." });
+        }
+
         /// <summary>List team members</summary>
         /// <remarks>
         /// Returns all members in the team with their roles and key versions.
