@@ -7,6 +7,8 @@ public class LoginResponse
     public required string AccessToken { get; set; }
     public required string RefreshToken { get; set; }
     public long ExpiresIn { get; set; }
+    public required string PublicKey { get; set; }
+    public required string KDFSalt { get; set; }
 }
 
 public class RefreshTokenResponse

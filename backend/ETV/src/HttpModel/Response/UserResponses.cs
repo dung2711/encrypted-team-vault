@@ -11,7 +11,6 @@ public class RegisterResponse
 public class GetKeyMaterialsResponse
 {
     public required string PublicKey { get; set; }
-    public required string EncryptedPrivateKey { get; set; }
     public required string KDFSalt { get; set; }
 }
 

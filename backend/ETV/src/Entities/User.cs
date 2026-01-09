@@ -5,7 +5,6 @@ public class User
     public string Email { get; set; }
     public string Password { get; set; }
     public string PublicKey { get; set; }
-    public string EncryptedPrivateKey { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public string KDFSalt { get; set; }
     public List<Team> Teams { get; set; }

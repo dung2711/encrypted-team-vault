@@ -82,7 +82,7 @@ public class TeamService(AppDb context)
         context.Teams.Remove(team);
         await context.SaveChangesAsync();
     }
-        
+
     /// <summary>
     /// Thêm member vào team
     /// Client gửi encrypted team key cho member mới
@@ -246,6 +246,45 @@ public class TeamService(AppDb context)
     {
         return await context.TeamMembers
             .AnyAsync(tm => tm.TeamId == teamId && tm.UserId == userId);
+    }
+
+    /// <summary>
+    /// Cập nhật encrypted team key cho một member cụ thể
+    /// Dùng khi re-encrypt team key cho member sau khi họ đổi password
+    /// </summary>
+    public async Task UpdateMemberTeamKeyAsync(Guid teamId, Guid userId, string encryptedTeamKey, int keyVersion)
+    {
+        var teamMember = await context.TeamMembers
+            .FirstOrDefaultAsync(tm => tm.TeamId == teamId && tm.UserId == userId);
+
+        if (teamMember == null)
+        {
+            throw new NotFoundException("TeamMember", userId);
+        }
+
+        teamMember.EncryptedTeamKey = encryptedTeamKey;
+        teamMember.KeyVersion = keyVersion;
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Cập nhật tất cả encrypted team keys cho một user (dùng khi đổi password)
+    /// </summary>
+    public async Task UpdateUserTeamKeysAsync(Guid userId, List<(Guid TeamId, string EncryptedTeamKey, int KeyVersion)> teamKeys)
+    {
+        foreach (var (teamId, encryptedTeamKey, keyVersion) in teamKeys)
+        {
+            var teamMember = await context.TeamMembers
+                .FirstOrDefaultAsync(tm => tm.TeamId == teamId && tm.UserId == userId);
+
+            if (teamMember != null)
+            {
+                teamMember.EncryptedTeamKey = encryptedTeamKey;
+                teamMember.KeyVersion = keyVersion;
+            }
+        }
+
+        await context.SaveChangesAsync();
     }
 
     /// <summary>

@@ -1,38 +1,99 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { login as loginUser, logout as logoutUser } from "../../../services/authApi.js";
-import { tokenStore } from "../../../api/tokenStore.js";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { handleLogin, handleRegistration, handleLogout } from "../../../flows/authFlow.js";
 
 const AuthContext = createContext();
 
+/**
+ * Authentication context using actual flow functions
+ * Manages user session and integrates with crypto key derivation
+ */
 export const AuthProvider = ({ children }) => {
-    const [role, setRole] = useState(null);
-    const [token, setToken] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const login = async (username, password) => {
-        const response = await loginUser(username, password);
-        if (response.token) {
-            setToken(response.token);
-            setRole(response.role);
-            tokenStore.set(response.token);
+    // Check for existing session on mount
+    useEffect(() => {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            try {
+                setCurrentUser(JSON.parse(storedUser));
+            } catch (e) {
+                localStorage.removeItem('currentUser');
+            }
         }
-        return response;
-    }
+        setLoading(false);
+    }, []);
 
-    const logout = async () => {
-        const response = await logoutUser();
-        setToken(null);
-        setRole(null);
-        tokenStore.clear();
-        return response;
-    }
+    const login = useCallback(async (username, password) => {
+        const result = await handleLogin({ username, password });
+
+        const user = {
+            id: result.userId,
+            username: result.username || username,
+            email: result.email,
+            accessToken: result.accessToken,
+            kdfSalt: result.kdfSalt,
+        };
+
+        setCurrentUser(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+
+        return result;
+    }, []);
+
+    const register = useCallback(async ({ username, email, password, autoLogin = false }) => {
+        const result = await handleRegistration({
+            username,
+            email,
+            password,
+            autoLogin
+        });
+
+        if (autoLogin && result) {
+            const user = {
+                id: result.userId,
+                username: result.username || username,
+                email: result.email || email,
+                accessToken: result.accessToken,
+            };
+            setCurrentUser(user);
+            localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+
+        return result;
+    }, []);
+
+    const logout = useCallback(async () => {
+        try {
+            await handleLogout();
+        } catch (e) {
+            // Ignore logout API errors, still clear local state
+        }
+
+        setCurrentUser(null);
+        localStorage.removeItem('currentUser');
+    }, []);
+
+    const value = {
+        currentUser,
+        loading,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!currentUser,
+    };
 
     return (
-        <AuthContext.Provider value={{ role, token, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
-}
+};
 
 export const useAuth = () => {
-    return useContext(AuthContext);
-}
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within AuthProvider');
+    }
+    return context;
+};

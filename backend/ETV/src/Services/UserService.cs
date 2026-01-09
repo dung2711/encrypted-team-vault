@@ -13,7 +13,7 @@ namespace ETV.src.Services
         /// Tạo user mới
         /// </summary>
         public async Task<User> CreateUserAsync(string username, string email, string password,
-            string publicKey, string encryptedPrivateKey, string kdfSalt)
+            string publicKey, string kdfSalt)
         {
             // Kiểm tra username đã tồn tại
             if (await IsUsernameExistsAsync(username))
@@ -37,7 +37,6 @@ namespace ETV.src.Services
                 Email = email,
                 Password = hashedPassword,
                 PublicKey = publicKey,
-                EncryptedPrivateKey = encryptedPrivateKey,
                 KDFSalt = kdfSalt,
                 CreatedAt = DateTimeOffset.UtcNow
             };
@@ -132,7 +131,7 @@ namespace ETV.src.Services
         /// Lấy key materials của user (public key, encrypted private key, salt)
         /// Dùng cho client khôi phục key pair
         /// </summary>
-        public async Task<(string PublicKey, string EncryptedPrivateKey, string KDFSalt)> GetKeyMaterialsAsync(Guid userId)
+        public async Task<(string PublicKey, string KDFSalt)> GetKeyMaterialsAsync(Guid userId)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId);
@@ -142,7 +141,7 @@ namespace ETV.src.Services
                 throw new NotFoundException("User", userId);
             }
 
-            return (user.PublicKey, user.EncryptedPrivateKey, user.KDFSalt);
+            return (user.PublicKey, user.KDFSalt);
         }
 
         /// <summary>
@@ -230,7 +229,7 @@ namespace ETV.src.Services
         /// <summary>
         /// Cập nhật tất cả key materials (dùng khi đổi mật khẩu)
         /// </summary>
-        public async Task UpdateAllKeyMaterialsAsync(Guid userId, string publicKey, string encryptedPrivateKey, string kdfSalt)
+        public async Task UpdateAllKeyMaterialsAsync(Guid userId, string publicKey, string kdfSalt)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId);
@@ -240,13 +239,12 @@ namespace ETV.src.Services
                 throw new NotFoundException("User", userId);
             }
 
-            if (string.IsNullOrWhiteSpace(publicKey) || string.IsNullOrWhiteSpace(encryptedPrivateKey) || string.IsNullOrWhiteSpace(kdfSalt))
+            if (string.IsNullOrWhiteSpace(publicKey) || string.IsNullOrWhiteSpace(kdfSalt))
             {
                 throw new ArgumentException("All key materials must be provided.");
             }
 
             user.PublicKey = publicKey;
-            user.EncryptedPrivateKey = encryptedPrivateKey;
             user.KDFSalt = kdfSalt;
             await _context.SaveChangesAsync();
         }

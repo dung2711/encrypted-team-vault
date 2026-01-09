@@ -119,6 +119,38 @@ namespace ETV.Controllers
             });
         }
 
+        /// <summary>Delete team</summary>
+        /// <remarks>
+        /// Permanently deletes a team and all associated data (members, items, keys).
+        /// Only team admin can delete the team.
+        /// This action cannot be undone.
+        /// </remarks>
+        /// <param name="teamId">Team ID</param>
+        /// <returns>Success message</returns>
+        /// <response code="200">Team deleted successfully</response>
+        /// <response code="401">Unauthorized - requires valid JWT token</response>
+        /// <response code="403">Forbidden - user is not team admin</response>
+        /// <response code="404">Team not found</response>
+        [HttpDelete("{teamId}")]
+        [ValidateEntityExists<Team>("teamId")]
+        [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> DeleteTeam([FromRoute] Guid teamId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            // Kiểm tra user có phải admin của team không
+            if (!await teamService.IsTeamAdminAsync(teamId, userId))
+            {
+                return Forbid();
+            }
+
+            await teamService.DeleteTeamAsync(teamId);
+
+            logger.LogInformation($"Team {teamId} deleted by user {userId}.");
+
+            return Ok(new { message = "Team deleted successfully." });
+        }
+
         /// <summary>List team members</summary>
         /// <remarks>
         /// Returns all members in the team with their roles and key versions.
@@ -277,6 +309,46 @@ namespace ETV.Controllers
             logger.LogInformation($"Team keys updated for team {teamId} by {userId}.");
 
             return Ok(new { message = "Team keys updated successfully." });
+        }
+
+        /// <summary>Update encrypted team key for a specific member</summary>
+        /// <remarks>
+        /// Updates the encrypted team key for a specific team member.
+        /// This is typically used when a member changes their password and needs to re-encrypt their team key.
+        /// Only team admin can update member keys.
+        /// </remarks>
+        /// <param name="teamId">Team ID</param>
+        /// <param name="userId">User ID of the member to update</param>
+        /// <param name="request">New encrypted team key and key version</param>
+        /// <returns>Success message</returns>
+        /// <response code="200">Member team key updated successfully</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="401">Unauthorized - requires valid JWT token</response>
+        /// <response code="403">Forbidden - user is not team admin</response>
+        /// <response code="404">Team or member not found</response>
+        [HttpPut("{teamId}/members/{userId}/key")]
+        [ValidateEntityExists<Team>("teamId")]
+        [ValidateEntityExists<User>("userId")]
+        [ValidateEntityRelation<Team, TeamMember>("teamId", "userId")]
+        [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateMemberTeamKey(
+            [FromRoute] Guid teamId,
+            [FromRoute] Guid userId,
+            [FromBody] UpdateMemberKeyRequest request)
+        {
+            var currentUserId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+
+            // Kiểm tra user có phải admin của team không
+            if (!await teamService.IsTeamAdminAsync(teamId, currentUserId))
+            {
+                return Forbid();
+            }
+
+            await teamService.UpdateMemberTeamKeyAsync(teamId, userId, request.EncryptedTeamKey, request.KeyVersion);
+
+            logger.LogInformation($"Team key updated for member {userId} in team {teamId} by {currentUserId}.");
+
+            return Ok(new { message = "Member team key updated successfully." });
         }
 
         /// <summary>Get encrypted team key for user</summary>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using ETV.HttpModel.Request;
 using ETV.HttpModel.Response;
+using ETV.Services;
 using ETV.src.Data;
 using ETV.src.Exceptions;
 using ETV.src.Services;
@@ -19,6 +20,7 @@ namespace ETV.Controllers
     public class AuthController : ControllerBase
     {
         private readonly UserService _userService;
+        private readonly TeamService _teamService;
         private readonly TokenProvider _tokenProvider;
         private readonly AppDb _db;
         private readonly ILogger<AuthController> _logger;
@@ -26,12 +28,14 @@ namespace ETV.Controllers
 
         public AuthController(
             UserService userService,
+            TeamService teamService,
             TokenProvider tokenProvider,
             AppDb db,
             ILogger<AuthController> logger,
             IConfiguration configuration)
         {
             _userService = userService;
+            _teamService = teamService;
             _tokenProvider = tokenProvider;
             _db = db;
             _logger = logger;
@@ -61,7 +65,6 @@ namespace ETV.Controllers
                     request.Email,
                     request.Password,
                     request.PublicKey,
-                    request.EncryptedPrivateKey,
                     request.KDFSalt
                 );
 
@@ -129,7 +132,9 @@ namespace ETV.Controllers
                     Username = user.Username,
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
-                    ExpiresIn = expiresInSeconds
+                    ExpiresIn = expiresInSeconds,
+                    PublicKey = user.PublicKey,
+                    KDFSalt = user.KDFSalt
                 };
 
                 _logger.LogInformation("User {Username} logged in successfully.", request.Username);
@@ -294,10 +299,14 @@ namespace ETV.Controllers
                 }
 
                 if (string.IsNullOrWhiteSpace(request.PublicKey) ||
-                    string.IsNullOrWhiteSpace(request.EncryptedPrivateKey) ||
                     string.IsNullOrWhiteSpace(request.KDFSalt))
                 {
-                    return BadRequest(new { message = "Public key, encrypted private key, and KDF salt are required." });
+                    return BadRequest(new { message = "Public key and KDF salt are required." });
+                }
+
+                if (request.ReEncryptedTeamKeys == null || request.ReEncryptedTeamKeys.Count == 0)
+                {
+                    return BadRequest(new { message = "Re-encrypted team keys are required. You must re-encrypt all your team keys with your new public key." });
                 }
 
                 // Verify old password
@@ -313,7 +322,13 @@ namespace ETV.Controllers
 
                 // Update password and key materials
                 await _userService.UpdatePasswordAsync(userId, hashedPassword);
-                await _userService.UpdateAllKeyMaterialsAsync(userId, request.PublicKey, request.EncryptedPrivateKey, request.KDFSalt);
+                await _userService.UpdateAllKeyMaterialsAsync(userId, request.PublicKey, request.KDFSalt);
+
+                // Update all team keys for this user
+                var teamKeys = request.ReEncryptedTeamKeys
+                    .Select(tk => (tk.TeamId, tk.EncryptedTeamKey, tk.KeyVersion))
+                    .ToList();
+                await _teamService.UpdateUserTeamKeysAsync(userId, teamKeys);
 
                 // Invalidate all refresh tokens (force re-login)
                 var userRefreshTokens = await _db.RefreshTokens
@@ -323,8 +338,8 @@ namespace ETV.Controllers
                 _db.RefreshTokens.RemoveRange(userRefreshTokens);
                 await _db.SaveChangesAsync();
 
-                _logger.LogInformation("Password and key materials changed for user {UserId}. All refresh tokens invalidated.", userId);
-                return Ok(new ChangePasswordResponse { Message = "Password and key materials updated successfully. Please login again with your new password." });
+                _logger.LogInformation("Password, key materials, and team keys changed for user {UserId}. All refresh tokens invalidated.", userId);
+                return Ok(new ChangePasswordResponse { Message = "Password, key materials, and team keys updated successfully. Please login again with your new password." });
             }
             catch (NotFoundException)
             {

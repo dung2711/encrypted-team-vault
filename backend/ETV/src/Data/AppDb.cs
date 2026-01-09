@@ -46,10 +46,6 @@ namespace ETV.src.Data
                     .IsRequired()
                     .HasColumnType("LONGTEXT");
 
-                entity.Property(u => u.EncryptedPrivateKey)
-                    .IsRequired()
-                    .HasColumnType("LONGTEXT");
-
                 entity.Property(u => u.KDFSalt)
                     .IsRequired()
                     .HasColumnType("LONGTEXT");
