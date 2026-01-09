@@ -7,6 +7,7 @@ import {
   deleteTeam,
   getEncryptedTeamKey,
   updateTeamKeyFor1Member,
+  getTeamMembers
 } from "../services/teamApi.js";
 import { getUserPublicKey, getUserByEmail } from "../services/userApi.js";
 import {
@@ -132,17 +133,25 @@ export async function handleAddMemberToTeam(teamId, newMemberEmail) {
 /**
  * Xoá member khỏi team
  * - Chỉ admin/owner mới có quyền
- * - QUAN TRỌNG: Rotate team key sau khi xoá member để member cũ không decrypt được nữa
- * - Gọi DELETE /teams/{teamId}/members/{memberId}
+ * - QUAN TRỌNG: Rotate team key sau khi xoá member để member cũ không decrypt được nữai
  */
 export async function handleRemoveMemberFromTeam(teamId, memberId) {
-  // 1. Get team info and current team key
-  const team = await getTeamById(teamId);
-  if (!team) {
-    throw new Error('Team not found');
+  // 1. Lấy danh sách members hiện tại từ backend
+  const membersRes = await getTeamMembers(teamId);
+  const currentMembers = membersRes?.members || [];
+
+  const remainingMembers = currentMembers.filter((m) => m.userId !== memberId);
+
+  if (remainingMembers.length === 0) {
+    throw new Error("Cannot remove last member. Delete the team instead.");
   }
 
+  // 2. Lấy encrypted team key hiện tại và decrypt
   const keyRes = await getEncryptedTeamKey(teamId);
+  if (!keyRes || !keyRes.encryptedTeamKey) {
+    throw new Error("Cannot load encrypted team key from backend");
+  }
+
   const encryptedTeamKeyBytes = base64ToUint8(keyRes.encryptedTeamKey);
   const currentKeyVersion = keyRes.keyVersion ?? 1;
 
@@ -150,21 +159,12 @@ export async function handleRemoveMemberFromTeam(teamId, memberId) {
     encryptedTeamKeyBytes,
   });
 
-  // 2. Get all members and filter out the one being removed
-  const currentMembers = team.members || [];
-  const remainingMembers = currentMembers.filter(m => m.userId !== memberId);
-
-  if (remainingMembers.length === 0) {
-    // No members left, just delete the team instead
-    throw new Error('Cannot remove last member. Delete the team instead.');
-  }
-
-  // 3. Get public keys for all remaining members
+  // 3. Lấy public key cho tất cả remaining members
   const membersWithKeys = await Promise.all(
     remainingMembers.map(async (member) => {
       const pkRes = await getUserPublicKey(member.userId);
       if (!pkRes || !pkRes.publicKey) {
-        throw new Error(`Cannot load public key for user ${member.userId}`);
+        throw new Error("Cannot load public key for user " + member.userId);
       }
       return {
         userId: member.userId,
@@ -173,14 +173,14 @@ export async function handleRemoveMemberFromTeam(teamId, memberId) {
     })
   );
 
-  // 4. Rotate team key for remaining members
+  // 4. Rotate team key cho các member còn lại
   const { newTeamKey, encryptedKeysForMembers, keyVersion: newKeyVersion } =
     await rotateTeamKey({
       members: membersWithKeys,
       keyVersion: currentKeyVersion,
     });
 
-  // 5. Update encrypted keys for all remaining members
+  // 5. Update encrypted team key mới cho từng member
   await Promise.all(
     encryptedKeysForMembers.map(({ userId, encryptedTeamKey }) =>
       updateTeamKeyFor1Member(
@@ -192,12 +192,13 @@ export async function handleRemoveMemberFromTeam(teamId, memberId) {
     )
   );
 
-  // 6. Finally remove the member
+  // 6. Cuối cùng xoá member khỏi team
   const apiRes = await removeMemberFromTeam(teamId, memberId);
 
   return {
     ...apiRes,
     newKeyVersion,
+    newTeamKeyBytes: newTeamKey,
   };
 }
 
@@ -213,9 +214,8 @@ export async function handleDeleteTeam(teamId) {
 
 /**
  * Lấy danh sách members của team
- * (có thể cần thêm service getTeamMembers nếu backend hỗ trợ)
  */
 export async function handleGetTeamMembers(teamId) {
-  const team = await getTeamById(teamId);
-  return team?.members || [];
+  const res = await getTeamMembers(teamId);
+  return res?.members || [];
 }

@@ -27,9 +27,12 @@ export const getTeamById = async (teamId) => {
     }
 }
 
-export const addMemberToTeam = async (teamId, memberData) => {
+export const addMemberToTeam = async (teamId, memberId, encryptedTeamKey) => {
     try {
-        const response = await apiClient.post(`/teams/${teamId}/members`, memberData);
+        const response = await apiClient.post(
+            `/teams/${teamId}/members/${memberId}`,
+            { encryptedTeamKey }
+        );
         return response.data;
     } catch (error) {
         return error.msg;
@@ -54,9 +57,9 @@ export const deleteTeam = async (teamId) => {
     }
 }
 
-export const getEncryptedTeamKey = async (teamId, memberId) => {
+export const getEncryptedTeamKey = async (teamId) => {
     try {
-        const response = await apiClient.get(`/teams/${teamId}/key`);
+        const response = await apiClient.get(`/teams/${teamId}/keys`);
         return response.data;
     } catch (error) {
         return error.msg;
@@ -65,8 +68,19 @@ export const getEncryptedTeamKey = async (teamId, memberId) => {
 
 export const updateTeamKeyFor1Member = async (teamId, memberId, keyVersion, encryptedTeamKey) => {
     try {
-        const response = await apiClient.put(`/teams/${teamId}/keys/${keyVersion}/member/${memberId}`, { encryptedTeamKey });
+        const response = await apiClient.put(
+            `/teams/${teamId}/members/${memberId}/key`,
+            { encryptedTeamKey, keyVersion }
+        );
         return response.data;
+    } catch (error) {
+        return error.msg;
+    }
+}
+export const getTeamMembers = async (teamId) => {
+    try {
+        const response = await apiClient.get(`/teams/${teamId}/members`);
+        return response.data; 
     } catch (error) {
         return error.msg;
     }
