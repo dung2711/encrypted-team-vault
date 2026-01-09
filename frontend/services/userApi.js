@@ -8,7 +8,16 @@ export const getUserInfo = async (id) => {
         return error.msg;
     }
 }
-
+export const getUserByEmail = async (email) => {
+    try {
+        const response = await apiClient.get(`/user/by-email`, {
+            params: { email },
+        });
+        return response.data;
+    } catch (error) {
+        return error.msg;
+    }
+};
 export const updateUserInfo = async (id, userInfo) => {
     try {
         const response = await apiClient.put(`/user/${id}`, userInfo);

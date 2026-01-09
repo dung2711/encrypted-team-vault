@@ -1,5 +1,3 @@
-// frontend/flows/teamFlow.js
-
 import {
   createTeam,
   getTeams,
@@ -7,7 +5,7 @@ import {
   addMemberToTeam,
   getEncryptedTeamKey,
 } from "../services/teamApi.js";
-import { getUserPublicKey } from "../services/userApi.js";
+import { getUserPublicKey, getUserByEmail } from "../services/userApi.js";
 import {
   createNewTeam,
   decryptTeamKeyForUser,
@@ -87,11 +85,15 @@ export async function handleLoadTeamKey(teamId) {
  * - get publicKey của member mới
  * - encryptTeamKey cho member
  * - gọi addMemberToTeam với userId + encryptedTeamKey
- *
- * LƯU Ý: service addMemberToTeam hiện gửi body { userId, encryptedTeamKey } (không có memberId trong URL),
- * trong khi backend hiện tại dùng {memberId} trong route. Bạn sẽ cần chỉnh backend hoặc service cho trùng.
  */
-export async function handleAddMemberToTeam(teamId, newMemberUserId) {
+export async function handleAddMemberToTeam(teamId, newMemberEmail) {
+  // 0. Từ email -> userId
+  const userInfo = await getUserByEmail(newMemberEmail);
+  if (!userInfo || !userInfo.id) {
+    throw new Error("Cannot find user with email " + newMemberEmail);
+  }
+  const newMemberUserId = userInfo.id;
+
   // 1. Lấy encryptedTeamKey cho current user
   const res = await getEncryptedTeamKey(teamId);
   const encryptedTeamKeyBytes = base64ToUint8(res.encryptedTeamKey);
@@ -113,7 +115,7 @@ export async function handleAddMemberToTeam(teamId, newMemberUserId) {
     memberPublicKeyBytes,
   });
 
-  // 4. Gọi API thêm member
+  // 4. Gọi API thêm member (giữ nguyên shape body như hiện tại)
   const body = {
     userId: newMemberUserId,
     encryptedTeamKey: uint8ToBase64(encryptedForMember),
