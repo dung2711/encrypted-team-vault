@@ -198,7 +198,7 @@ namespace ETV.Controllers
         /// Only team admin can add members.
         /// </remarks>
         /// <param name="teamId">Team ID</param>
-        /// <param name="memberId">User ID to add as member</param>
+        /// <param name="userId">User ID to add as member</param>
         /// <param name="request">Encrypted team key for the member</param>
         /// <returns>Success message</returns>
         /// <response code="201">Member added successfully</response>
@@ -206,17 +206,17 @@ namespace ETV.Controllers
         /// <response code="401">Unauthorized - requires valid JWT token</response>
         /// <response code="403">Forbidden - user is not team admin</response>
         /// <response code="404">Team or user not found</response>
-        [HttpPost("{teamId}/members/{memberId}")]
+        [HttpPost("{teamId}/members/{userId}")]
         [ValidateEntityExists<Team>("teamId")]
-        [ValidateEntityExists<User>("memberId")]
+        [ValidateEntityExists<User>("userId")]
         [ProducesResponseType(typeof(SuccessMessageResponse), StatusCodes.Status201Created)]
-        public async Task<IActionResult> AddMember([FromRoute] Guid teamId, [FromRoute] Guid memberId, [FromBody] AddMemberRequest request)
+        public async Task<IActionResult> AddMember([FromRoute] Guid teamId, [FromRoute] Guid userId, [FromBody] AddMemberRequest request)
         {
-            // TODO: Lấy userId từ JWT token
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            // TODO: Lấy adminId từ JWT token
+            var adminId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
             // Kiểm tra user có phải admin của team không
-            if (!await teamService.IsTeamAdminAsync(teamId, userId))
+            if (!await teamService.IsTeamAdminAsync(teamId, adminId))
             {
                 return Forbid();
             }
@@ -226,16 +226,16 @@ namespace ETV.Controllers
 
             await teamService.AddMemberToTeamAsync(
                 teamId,
-                memberId,
+                userId,
                 Role.Member,
                 request.EncryptedTeamKey,
                 currentKeyVersion
             );
 
-            logger.LogInformation($"User {memberId} added to team {teamId} by {userId}.");
+            logger.LogInformation($"User {userId} added to team {teamId} by {adminId}.");
 
             return Created(
-                new Uri($"{Request.Scheme}://{Request.Host}/api/teams/{teamId}/members/{memberId}"),
+                new Uri($"{Request.Scheme}://{Request.Host}/api/teams/{teamId}/members/{userId}"),
                 new { message = "Member added successfully." }
             );
         }

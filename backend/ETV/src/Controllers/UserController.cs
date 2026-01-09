@@ -84,5 +84,39 @@ namespace ETV.Controllers
                 createdAt = createdAt
             });
         }
+
+        /// <summary>
+        /// Update user profile information
+        /// </summary>
+        /// <remarks>
+        /// Updates username and/or email for the user.
+        /// Username and email must be unique across the system.
+        /// </remarks>
+        /// <param name="id">User ID</param>
+        /// <param name="request">Updated username and email</param>
+        /// <returns>Updated user profile</returns>
+        /// <response code="200">User profile updated successfully</response>
+        /// <response code="400">Invalid request data or username/email already in use</response>
+        /// <response code="401">Unauthorized - requires valid JWT token</response>
+        /// <response code="404">User not found</response>
+        [Authorize]
+        [HttpPut("{id}")]
+        [ValidateEntityExists<User>("id")]
+        [ProducesResponseType(typeof(GetUserResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateUserProfile([FromRoute] Guid id, [FromBody] UpdateUserProfileRequest request)
+        {
+            await _userService.UpdateProfileAsync(id, request.Username, request.Email);
+            _logger.LogInformation($"User {id} profile updated.");
+
+            var (userId, username, email, createdAt) = await _userService.GetUserInfoAsync(id);
+
+            return Ok(new
+            {
+                id = userId,
+                username = username,
+                email = email,
+                createdAt = createdAt
+            });
+        }
     }
 }

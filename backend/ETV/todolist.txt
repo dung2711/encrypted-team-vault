@@ -1,4 +1,13 @@
-﻿thêm authorization filter, kiểm tra user có quyền truy cập team không,
-    có được thêm xóa sửa team không     
-    có được thêm xóa sửa item không
-    với các endpoint yêu cầu 2 id (teamid, itemid, userid) cần kiểm tra xem id đó có thuộc về team hay không
+﻿handleRegistration Ok
+
+handleCreateTeam :
+const apiTeam = await createTeam({
+    name: teamName, !!=> teamName : teamName
+    encryptedTeamKey: uint8ToBase64(encryptedTeamKeyForCreator),
+  });
+
+teamApi: getEncryptedTeamKey apiClient.get(`/teams/${teamId}/key`); => /${teamId}/keys
+
+handleAddMemberToTeam 
+service addMemberToTeam hiện gửi body { userId, encryptedTeamKey } (không có memberId trong URL), trong khi backend hiện tại dùng {userId} trong route
+

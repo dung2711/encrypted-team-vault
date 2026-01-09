@@ -8,7 +8,6 @@ public class CreateTeamRequest
 
 public class AddMemberRequest
 {
-    public Guid UserId { get; set; }
     public required string EncryptedTeamKey { get; set; }
 }
 
