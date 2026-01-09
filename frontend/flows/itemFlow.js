@@ -211,10 +211,8 @@ export async function handleDecryptPersonalItem({ itemId, userId }) {
  * Lấy và giải mã tất cả personal items
  */
 export async function handleGetAllPersonalItems({ userId }) {
-  const items = await getPersonalItems();
-  if (!items || !Array.isArray(items)) {
-    return [];
-  }
+  const res = await getPersonalItems();
+  const items = res?.items || [];
 
   const decryptedItems = [];
   for (const item of items) {
@@ -265,10 +263,8 @@ export async function handleGetAllPersonalItems({ userId }) {
  * Lấy và giải mã tất cả team items
  */
 export async function handleGetAllTeamItems({ teamId, teamKeyBytes }) {
-  const items = await getTeamItems(teamId);
-  if (!items || !Array.isArray(items)) {
-    return [];
-  }
+  const res = await getTeamItems(teamId);
+  const items = res?.items || [];
 
   const decryptedItems = [];
   for (const item of items) {
