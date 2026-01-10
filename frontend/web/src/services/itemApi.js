@@ -9,7 +9,7 @@ export const createTeamItem = async ({ teamId, encryptedBlob, encryptedItemKey, 
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -18,7 +18,7 @@ export const getTeamItems = async (teamId) => {
         const response = await apiClient.get(`/teams/${teamId}/items`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -27,7 +27,7 @@ export const getTeamItemById = async (teamId, itemId) => {
         const response = await apiClient.get(`/teams/${teamId}/items/${itemId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -40,7 +40,7 @@ export const updateTeamItem = async ({ teamId, itemId, encryptedBlob, encryptedI
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -49,7 +49,7 @@ export const deleteTeamItem = async (teamId, itemId) => {
         const response = await apiClient.delete(`/teams/${teamId}/items/${itemId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -62,7 +62,7 @@ export const createPersonalItem = async ({ encryptedBlob, encryptedItemKey, keyV
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -71,7 +71,7 @@ export const getPersonalItems = async () => {
         const response = await apiClient.get(`/user/items`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -80,7 +80,7 @@ export const getPersonalItemById = async (itemId) => {
         const response = await apiClient.get(`/user/items/${itemId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -93,7 +93,7 @@ export const updatePersonalItem = async ({ itemId, encryptedBlob, encryptedItemK
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -102,6 +102,6 @@ export const deletePersonalItem = async (itemId) => {
         const response = await apiClient.delete(`/user/items/${itemId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }

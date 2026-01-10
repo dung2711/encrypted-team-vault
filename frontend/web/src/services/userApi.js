@@ -5,7 +5,7 @@ export const getUserInfo = async (id) => {
         const response = await apiClient.get(`/user/${id}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 export const getUserByEmail = async (email) => {
@@ -15,7 +15,7 @@ export const getUserByEmail = async (email) => {
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 };
 export const updateUserInfo = async (id, userInfo) => {
@@ -23,7 +23,7 @@ export const updateUserInfo = async (id, userInfo) => {
         const response = await apiClient.put(`/user/${id}`, userInfo);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -32,6 +32,6 @@ export const getUserPublicKey = async (userId) => {
         const response = await apiClient.get(`/user/${userId}/publickey`);
         return response.data;  // Returns { userId, publicKey }
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }

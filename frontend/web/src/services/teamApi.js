@@ -5,7 +5,7 @@ export const createTeam = async (teamData) => {
         const response = await apiClient.post('/teams', teamData);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -14,7 +14,7 @@ export const getTeams = async (userId) => {
         const response = await apiClient.get(`/teams/`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -23,7 +23,7 @@ export const getTeamById = async (teamId) => {
         const response = await apiClient.get(`/teams/${teamId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -35,7 +35,7 @@ export const addMemberToTeam = async (teamId, memberId, encryptedTeamKey) => {
         );
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -44,7 +44,7 @@ export const removeMemberFromTeam = async (teamId, memberId) => {
         const response = await apiClient.delete(`/teams/${teamId}/members/${memberId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -53,7 +53,7 @@ export const deleteTeam = async (teamId) => {
         const response = await apiClient.delete(`/teams/${teamId}`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -62,7 +62,7 @@ export const getEncryptedTeamKey = async (teamId) => {
         const response = await apiClient.get(`/teams/${teamId}/keys`);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -74,14 +74,14 @@ export const updateTeamKeyFor1Member = async (teamId, memberId, keyVersion, encr
         );
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 export const getTeamMembers = async (teamId) => {
     try {
         const response = await apiClient.get(`/teams/${teamId}/members`);
-        return response.data; 
+        return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }

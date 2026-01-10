@@ -8,7 +8,7 @@ export const login = async (username, password) => {
         });
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -17,7 +17,7 @@ export const register = async (registrationPayload) => {
         const response = await apiClient.post('/auth/register', registrationPayload);
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }
 
@@ -26,6 +26,6 @@ export const logout = async () => {
         const response = await apiClient.post('/auth/logout');
         return response.data;
     } catch (error) {
-        return error.msg;
+        console.log(error);
     }
 }

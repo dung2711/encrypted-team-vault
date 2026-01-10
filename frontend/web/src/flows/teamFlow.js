@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { v4 as uuidv4 } from 'uuid';
 import {
   createTeam,
   getTeams,
@@ -24,6 +25,21 @@ const uint8ToBase64 = (uint8) =>
   Buffer.from(uint8).toString("base64");
 
 /**
+ * Get current user from localStorage (set by AuthContext)
+ */
+const getCurrentUser = () => {
+  const storedUser = localStorage.getItem('currentUser');
+  if (!storedUser) {
+    throw new Error('No authenticated user found');
+  }
+  try {
+    return JSON.parse(storedUser);
+  } catch (e) {
+    throw new Error('Invalid user data in storage');
+  }
+};
+
+/**
  * Lấy danh sách team của user hiện tại (dựa trên JWT)
  */
 export async function handleGetTeams() {
@@ -38,12 +54,22 @@ export async function handleGetTeams() {
  * - trả về team từ backend + teamKey trong RAM để dùng ngay
  */
 export async function handleCreateTeam(teamName) {
+  const teamId = uuidv4();
+  const currentUser = await getCurrentUser();
+  const userId = currentUser.id;
+
   const {
     teamKey,
     encryptedTeamKeyForCreator,
-  } = await createNewTeam({ teamName });
+  } = await createNewTeam({
+    teamName,
+    teamId,
+    userId,
+    keyVersion: 1
+  });
 
   const apiTeam = await createTeam({
+    id: teamId,
     name: teamName,
     encryptedTeamKey: uint8ToBase64(encryptedTeamKeyForCreator),
   });
@@ -74,14 +100,20 @@ export async function handleLoadTeamKey(teamId) {
   }
 
   const encryptedTeamKeyBytes = base64ToUint8(res.encryptedTeamKey);
+  const currentUser = await getCurrentUser();
+  const userId = currentUser.id;
+  const keyVersion = res.keyVersion ?? 1;
 
   const teamKeyBytes = await decryptTeamKeyForUser({
     encryptedTeamKeyBytes,
+    teamId,
+    userId,
+    keyVersion
   });
 
   return {
     teamKeyBytes,
-    keyVersion: res.keyVersion ?? 1,
+    keyVersion,
   };
 }
 
@@ -103,9 +135,15 @@ export async function handleAddMemberToTeam(teamId, newMemberEmail) {
   // 1. Lấy encryptedTeamKey cho current user
   const res = await getEncryptedTeamKey(teamId);
   const encryptedTeamKeyBytes = base64ToUint8(res.encryptedTeamKey);
+  const currentUser = await getCurrentUser();
+  const userId = currentUser.id;
+  const keyVersion = res.keyVersion ?? 1;
 
   const teamKeyBytes = await decryptTeamKeyForUser({
     encryptedTeamKeyBytes,
+    teamId,
+    userId,
+    keyVersion
   });
 
   // 2. Lấy public key của member
@@ -119,6 +157,9 @@ export async function handleAddMemberToTeam(teamId, newMemberEmail) {
   const encryptedForMember = await prepareTeamKeyForNewMember({
     teamKeyBytes,
     memberPublicKeyBytes,
+    teamId,
+    memberId: newMemberUserId,
+    keyVersion
   });
 
   // 4. Gọi API thêm member (giữ nguyên shape body như hiện tại)
@@ -155,9 +196,14 @@ export async function handleRemoveMemberFromTeam(teamId, memberId) {
 
   const encryptedTeamKeyBytes = base64ToUint8(keyRes.encryptedTeamKey);
   const currentKeyVersion = keyRes.keyVersion ?? 1;
+  const currentUser = await getCurrentUser();
+  const userId = currentUser.id;
 
   const teamKeyBytes = await decryptTeamKeyForUser({
     encryptedTeamKeyBytes,
+    teamId,
+    userId,
+    keyVersion: currentKeyVersion
   });
 
   // 3. Lấy public key cho tất cả remaining members
@@ -179,6 +225,7 @@ export async function handleRemoveMemberFromTeam(teamId, memberId) {
     await rotateTeamKey({
       members: membersWithKeys,
       keyVersion: currentKeyVersion,
+      teamId
     });
 
   // 5. Update encrypted team key mới cho từng member

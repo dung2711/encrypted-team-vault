@@ -15,14 +15,17 @@ import { v4 as uuidv4 } from 'uuid';
  * Create a new team with encrypted team key for the creator
  * Returns team key (in memory) and encrypted version for storage
  */
-export async function createNewTeam({ teamName }) {
+export async function createNewTeam({ teamName, teamId, userId, keyVersion = 1 }) {
     // Generate new team key
     const teamKeyBytes = await genTeamKey();
 
     // Encrypt team key for creator using their public key
     const encryptedTeamKeyForCreator = await encryptTeamKey({
         teamKeyBytes,
-        memberPublicKeyBytes: keyStore.userAsymmetricKeyPair.publicKey
+        memberPublicKeyBytes: keyStore.userAsymmetricKeyPair.publicKey,
+        teamId,
+        memberId: userId,
+        keyVersion
     });
 
     return {
@@ -36,11 +39,14 @@ export async function createNewTeam({ teamName }) {
  * Decrypt team key for current user
  * Call this when user accesses a team
  */
-export async function decryptTeamKeyForUser({ encryptedTeamKeyBytes }) {
+export async function decryptTeamKeyForUser({ encryptedTeamKeyBytes, teamId, userId, keyVersion }) {
     const teamKeyBytes = await decryptTeamKey({
-        encryptedTeamKeyBytes,
+        encryptedMessage: encryptedTeamKeyBytes,
         memberPublicKeyBytes: keyStore.userAsymmetricKeyPair.publicKey,
-        memberPrivateKeyBytes: keyStore.userAsymmetricKeyPair.privateKey
+        memberPrivateKeyBytes: keyStore.userAsymmetricKeyPair.privateKey,
+        teamId,
+        memberId: userId,
+        keyVersion
     });
 
     return teamKeyBytes;
@@ -50,10 +56,13 @@ export async function decryptTeamKeyForUser({ encryptedTeamKeyBytes }) {
  * Prepare encrypted team key for a new member
  * Admin calls this when inviting someone to the team
  */
-export async function prepareTeamKeyForNewMember({ teamKeyBytes, memberPublicKeyBytes }) {
+export async function prepareTeamKeyForNewMember({ teamKeyBytes, memberPublicKeyBytes, teamId, memberId, keyVersion }) {
     const encryptedTeamKey = await encryptTeamKey({
         teamKeyBytes,
-        memberPublicKeyBytes
+        memberPublicKeyBytes,
+        teamId,
+        memberId,
+        keyVersion
     });
 
     return encryptedTeamKey;
@@ -196,7 +205,7 @@ export async function updateTeamSecret({
  * Rotate team key - generates new team key and encrypts for all members
  * Admin only operation
  */
-export async function rotateTeamKey({ members, keyVersion }) {
+export async function rotateTeamKey({ members, keyVersion, teamId }) {
     // Generate new team key
     const newTeamKeyBytes = await genTeamKey();
     const newKeyVersion = keyVersion + 1;
@@ -207,7 +216,10 @@ export async function rotateTeamKey({ members, keyVersion }) {
             userId: member.userId,
             encryptedTeamKey: await encryptTeamKey({
                 teamKeyBytes: newTeamKeyBytes,
-                memberPublicKeyBytes: member.publicKey
+                memberPublicKeyBytes: member.publicKey,
+                teamId,
+                memberId: member.userId,
+                keyVersion: newKeyVersion
             }),
             keyVersion: newKeyVersion
         }))
