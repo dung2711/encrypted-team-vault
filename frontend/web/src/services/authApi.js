@@ -14,7 +14,7 @@ export const login = async (username, password) => {
 
 export const register = async (registrationPayload) => {
     try {
-        const response = await apiClient.post('/user/auth/register', registrationPayload);
+        const response = await apiClient.post('/auth/register', registrationPayload);
         return response.data;
     } catch (error) {
         return error.msg;
