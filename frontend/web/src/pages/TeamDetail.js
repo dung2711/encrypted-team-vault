@@ -56,13 +56,13 @@ import {
     handleRemoveMemberFromTeam,
     handleDeleteTeam,
     handleGetTeamMembers,
-} from '../../../flows/teamFlow';
+} from '../flows/teamFlow';
 import {
     handleCreateTeamItem,
     handleGetAllTeamItems,
     handleUpdateTeamItem,
     handleDeleteTeamItem,
-} from '../../../flows/itemFlow';
+} from '../flows/itemFlow';
 
 const secretTypes = ['password', 'api_key', 'note', 'credential', 'other'];
 

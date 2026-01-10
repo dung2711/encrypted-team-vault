@@ -24,8 +24,8 @@ import {
     Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { handleGetTeams, handleGetTeamMembers } from '../../../flows/teamFlow';
-import { handleGetAllPersonalItems } from '../../../flows/itemFlow';
+import { handleGetTeams, handleGetTeamMembers } from '../flows/teamFlow';
+import { handleGetAllPersonalItems } from '../flows/itemFlow';
 
 const Dashboard = () => {
     const navigate = useNavigate();

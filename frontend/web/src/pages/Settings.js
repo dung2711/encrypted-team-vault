@@ -15,7 +15,7 @@ import {
     Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { updateUserInfo } from '../../../services/userApi';
+import { updateUserInfo } from '../services/userApi';
 
 const Settings = () => {
     const { currentUser } = useAuth();

@@ -32,8 +32,8 @@ import {
     handleGetTeams,
     handleCreateTeam,
     handleGetTeamMembers,
-} from '../../../flows/teamFlow';
-import { handleGetAllTeamItems } from '../../../flows/itemFlow';
+} from '../flows/teamFlow';
+import { handleGetAllTeamItems } from '../flows/itemFlow';
 
 const TeamList = () => {
     const navigate = useNavigate();

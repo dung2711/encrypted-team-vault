@@ -44,7 +44,7 @@ import {
     handleGetAllPersonalItems,
     handleUpdatePersonalItem,
     handleDeletePersonalItem,
-} from '../../../flows/itemFlow';
+} from '../flows/itemFlow';
 
 const secretTypes = ['password', 'api_key', 'note', 'credit_card', 'other'];
 
@@ -278,7 +278,7 @@ const PersonalVault = () => {
                             const type = data.type || 'other';
                             const secret = data.secret || '';
                             const username = data.username;
-                            
+
                             return (
                                 <ListItem
                                     key={item.id}
@@ -351,114 +351,93 @@ const PersonalVault = () => {
                     </List>
                 </Card>
             )}
-                                    >
-                                        {visibleSecrets[item.id] ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                    </IconButton>
-                                    <IconButton
-                                        onClick={() => handleCopy(item.decryptedSecret || '')}
-                                        size="small"
-                                    >
-                                        <CopyIcon />
-                                    </IconButton>
-                                    <IconButton
-                                        onClick={(e) => handleMenuOpen(e, item)}
-                                        size="small"
-                                    >
-                                        <MoreVertIcon />
-                                    </IconButton>
-                                </ListItemSecondaryAction >
-                            </ListItem >
-                        ))}
-                    </List >
-                </Card >
-            )}
 
-{/* Context Menu */ }
-<Menu
-    anchorEl={anchorEl}
-    open={Boolean(anchorEl)}
-    onClose={handleMenuClose}
->
-    <MenuItem onClick={() => { handleOpenDialog(selectedItem); handleMenuClose(); }}>
-        <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
-    </MenuItem>
-    <MenuItem onClick={() => handleCopy(selectedItem?.decryptedData?.secret || '')}>
-        <CopyIcon fontSize="small" sx={{ mr: 1 }} /> Copy Secret
-    </MenuItem>
-    <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-        <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
-    </MenuItem>
-</Menu>
+            {/* Context Menu */}
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+            >
+                <MenuItem onClick={() => { handleOpenDialog(selectedItem); handleMenuClose(); }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
+                </MenuItem>
+                <MenuItem onClick={() => handleCopy(selectedItem?.decryptedData?.secret || '')}>
+                    <CopyIcon fontSize="small" sx={{ mr: 1 }} /> Copy Secret
+                </MenuItem>
+                <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
+                </MenuItem>
+            </Menu>
 
-{/* Add/Edit Dialog */ }
-<Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-    <DialogTitle>
-        {editingItem ? 'Edit Secret' : 'Add New Secret'}
-    </DialogTitle>
-    <DialogContent>
-        <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-                fullWidth
-                label="Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-            />
-            <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                    value={formData.type}
-                    label="Type"
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                >
-                    {secretTypes.map(type => (
-                        <MenuItem key={type} value={type}>
-                            {type.replace('_', ' ').charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-            <TextField
-                fullWidth
-                label="Username (optional)"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-            />
-            <TextField
-                fullWidth
-                label="Secret / Password"
-                value={formData.secret}
-                onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
-                type="password"
-                required
-            />
-            <TextField
-                fullWidth
-                label="URL (optional)"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-            />
-            <TextField
-                fullWidth
-                label="Notes (optional)"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                multiline
-                rows={3}
-            />
-        </Box>
-    </DialogContent>
-    <DialogActions>
-        <Button onClick={handleCloseDialog}>Cancel</Button>
-        <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={!formData.name || !formData.secret || saving}
-        >
-            {saving ? <CircularProgress size={20} /> : (editingItem ? 'Save Changes' : 'Add Secret')}
-        </Button>
-    </DialogActions>
-</Dialog>
+            {/* Add/Edit Dialog */}
+            <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    {editingItem ? 'Edit Secret' : 'Add New Secret'}
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            fullWidth
+                            label="Name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Type</InputLabel>
+                            <Select
+                                value={formData.type}
+                                label="Type"
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            >
+                                {secretTypes.map(type => (
+                                    <MenuItem key={type} value={type}>
+                                        {type.replace('_', ' ').charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label="Username (optional)"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Secret / Password"
+                            value={formData.secret}
+                            onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
+                            type="password"
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="URL (optional)"
+                            value={formData.url}
+                            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Notes (optional)"
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            multiline
+                            rows={3}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        disabled={!formData.name || !formData.secret || saving}
+                    >
+                        {saving ? <CircularProgress size={20} /> : (editingItem ? 'Save Changes' : 'Add Secret')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box >
     );
 };

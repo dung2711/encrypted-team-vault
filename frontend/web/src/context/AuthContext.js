@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { handleLogin, handleRegistration, handleLogout } from "../../../flows/authFlow.js";
+import { handleLogin, handleRegistration, handleLogout } from "../flows/authFlow.js";
 
 const AuthContext = createContext();
 
