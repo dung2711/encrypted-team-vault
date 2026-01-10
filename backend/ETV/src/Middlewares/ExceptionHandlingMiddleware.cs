@@ -37,6 +37,12 @@ namespace ETV.src.Middlewares
                     response.StatusCode = 404;
                     break;
 
+                case var ex when ex.GetType().IsGenericType && ex.GetType().GetGenericTypeDefinition() == typeof(AlreadyExistException<>):
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    response.Message = ex.Message;
+                    response.StatusCode = 409;
+                    break;
+
                 case InvalidOperationException invalidOpEx:
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
                     response.Message = invalidOpEx.Message;

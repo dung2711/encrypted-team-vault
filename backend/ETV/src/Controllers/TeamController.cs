@@ -27,9 +27,11 @@ namespace ETV.Controllers
         /// <summary>Create a new team</summary>
         /// <remarks>
         /// Creates a new team with the requesting user as admin.
+        /// Client must generate a UUID v4 and provide it in the request.
+        /// This ID should be used as AAD when encrypting the team key with AES-GCM.
         /// Team key is encrypted with creator's public key.
         /// </remarks>
-        /// <param name="request">Team name and encrypted team key</param>
+        /// <param name="request">Client-generated ID, team name, and encrypted team key</param>
         /// <returns>Created team with ID and metadata</returns>
         /// <response code="201">Team created successfully</response>
         /// <response code="400">Invalid request data</response>
@@ -44,7 +46,8 @@ namespace ETV.Controllers
             var team = await teamService.CreateTeamAsync(
                 request.TeamName,
                 userId,
-                request.EncryptedTeamKeyForCreator
+                request.EncryptedTeamKeyForCreator,
+                request.Id
             );
 
             logger.LogInformation($"Team {team.TeamId} created by user {userId}.");

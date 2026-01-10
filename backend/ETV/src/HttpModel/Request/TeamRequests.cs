@@ -2,6 +2,11 @@ namespace ETV.HttpModel.Request;
 
 public class CreateTeamRequest
 {
+    /// <summary>
+    /// Client-generated UUID v4 for the team.
+    /// This ID should be used as AAD (Additional Authenticated Data) when encrypting the team key with AES-GCM.
+    /// </summary>
+    public required Guid Id { get; set; }
     public required string TeamName { get; set; }
     public required string EncryptedTeamKeyForCreator { get; set; }
 }

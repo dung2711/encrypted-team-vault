@@ -9,15 +9,26 @@ public class ItemService(AppDb context)
     #region Team Items
 
     /// <summary>
-    /// Tạo item mới cho team
-    /// Client gửi: encrypted blob, encrypted item key, item_key_version
+    /// Tạo item mới cho team với ID do client cung cấp
+    /// Client gửi: item ID, encrypted blob, encrypted item key, item_key_version
+    /// Client sử dụng itemId làm AAD khi mã hóa item data
+    /// Kiểm tra item ID đã tồn tại chưa, nếu có thì throw AlreadyExistException&lt;VaultItem&gt;
     /// </summary>
     public async Task<VaultItem> CreateItemAsync(Guid teamId, string encryptedBlob,
-        string encryptedItemKey, int keyVersion)
+        string encryptedItemKey, int keyVersion, Guid itemId)
     {
+        // Kiểm tra item ID đã tồn tại chưa
+        var existingItem = await context.VaultItems
+            .FirstOrDefaultAsync(v => v.Id == itemId);
+
+        if (existingItem != null)
+        {
+            throw new AlreadyExistException<VaultItem>(itemId);
+        }
+
         var item = new VaultItem
         {
-            Id = Guid.NewGuid(),
+            Id = itemId,
             TeamId = teamId,
             UserId = null,
             EncryptedBlob = encryptedBlob,
@@ -118,14 +129,25 @@ public class ItemService(AppDb context)
     #region Personal Items
 
     /// <summary>
-    /// Tạo personal item cho user
+    /// Tạo personal item cho user với ID do client cung cấp
+    /// Client sử dụng itemId làm AAD khi mã hóa item data
+    /// Kiểm tra item ID đã tồn tại chưa, nếu có thì throw AlreadyExistException&lt;VaultItem&gt;
     /// </summary>
     public async Task<VaultItem> CreatePersonalItemAsync(Guid userId, string encryptedBlob,
-        string encryptedItemKey, int keyVersion)
+        string encryptedItemKey, int keyVersion, Guid itemId)
     {
+        // Kiểm tra item ID đã tồn tại chưa
+        var existingItem = await context.VaultItems
+            .FirstOrDefaultAsync(v => v.Id == itemId);
+
+        if (existingItem != null)
+        {
+            throw new AlreadyExistException<VaultItem>(itemId);
+        }
+
         var item = new VaultItem
         {
-            Id = Guid.NewGuid(),
+            Id = itemId,
             TeamId = null,
             UserId = userId,
             EncryptedBlob = encryptedBlob,

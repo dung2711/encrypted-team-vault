@@ -7,14 +7,24 @@ namespace ETV.Services;
 public class TeamService(AppDb context)
 {
     /// <summary>
-    /// Tạo team mới
-    /// Client sinh team key ngẫu nhiên và mã hóa bằng public key của user
+    /// Tạo team mới với ID do client cung cấp
+    /// Client sinh team key ngẫu nhiên, mã hóa bằng public key của user, sử dụng teamId làm AAD
+    /// Kiểm tra team ID đã tồn tại chưa, nếu có thì throw AlreadyExistException&lt;Team&gt;
     /// </summary>
-    public async Task<Team> CreateTeamAsync(string teamName, Guid creatorId, string encryptedTeamKeyForCreator)
+    public async Task<Team> CreateTeamAsync(string teamName, Guid creatorId, string encryptedTeamKeyForCreator, Guid teamId)
     {
+        // Kiểm tra team ID đã tồn tại chưa
+        var existingTeam = await context.Teams
+            .FirstOrDefaultAsync(t => t.TeamId == teamId);
+
+        if (existingTeam != null)
+        {
+            throw new AlreadyExistException<Team>(teamId);
+        }
+
         var team = new Team
         {
-            TeamId = Guid.NewGuid(),
+            TeamId = teamId,
             TeamName = teamName,
             CreatedAt = DateTimeOffset.UtcNow
         };

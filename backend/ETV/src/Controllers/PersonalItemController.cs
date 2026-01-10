@@ -24,13 +24,16 @@ public class PersonalItemController(ItemService itemService, ILogger<PersonalIte
     /// <summary>Create a new personal vault item</summary>
     /// <remarks>
     /// Creates encrypted personal vault item with encrypted blob and item key.
+    /// Client must generate a UUID v4 and provide it in the request.
+    /// This ID should be used as AAD when encrypting the item data with AES-GCM.
     /// Item belongs to the authenticated user only.
     /// </remarks>
-    /// <param name="request">Item data with encrypted blob and key</param>
+    /// <param name="request">Item data with client-generated ID, encrypted blob and key</param>
     /// <returns>Created item with ID and metadata</returns>
     /// <response code="201">Item created successfully</response>
     /// <response code="400">Invalid request data</response>
     /// <response code="401">Unauthorized - requires valid JWT token</response>
+    /// <response code="409">Conflict - item ID already exists</response>
     [HttpPost]
     [ProducesResponseType(typeof(CreateItemResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreatePersonalItem([FromBody] CreateItemRequest request)
@@ -41,7 +44,8 @@ public class PersonalItemController(ItemService itemService, ILogger<PersonalIte
             userId,
             request.EncryptedBlob,
             request.EncryptedItemKey,
-            request.KeyVersion
+            request.KeyVersion,
+            request.Id
         );
 
         logger.LogInformation($"Personal item {item.Id} created by user {userId}.");

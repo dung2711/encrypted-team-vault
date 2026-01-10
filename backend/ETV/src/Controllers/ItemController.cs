@@ -22,16 +22,19 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
     /// <summary>Create a new vault item in team</summary>
     /// <remarks>
     /// Creates encrypted vault item with encrypted blob and item key.
+    /// Client must generate a UUID v4 and provide it in the request.
+    /// This ID should be used as AAD when encrypting the item data with AES-GCM.
     /// User must be team member to create items.
     /// </remarks>
     /// <param name="teamId">Team ID</param>
-    /// <param name="request">Item data with encrypted blob and key</param>
+    /// <param name="request">Item data with client-generated ID, encrypted blob and key</param>
     /// <returns>Created item with ID and metadata</returns>
     /// <response code="201">Item created successfully</response>
     /// <response code="400">Invalid request data</response>
     /// <response code="401">Unauthorized - requires valid JWT token</response>
     /// <response code="403">Forbidden - user is not team member</response>
     /// <response code="404">Team not found</response>
+    /// <response code="409">Conflict - item ID already exists</response>
     [HttpPost]
     [ValidateEntityExists<Team>("teamId")]
     [ProducesResponseType(typeof(CreateItemResponse), StatusCodes.Status201Created)]
@@ -50,7 +53,8 @@ public class ItemController(ItemService itemService, TeamService teamService, IL
             teamId,
             request.EncryptedBlob,
             request.EncryptedItemKey,
-            request.KeyVersion
+            request.KeyVersion,
+            request.Id
         );
 
         logger.LogInformation($"Item {item.Id} created in team {teamId} by user {userId}.");
