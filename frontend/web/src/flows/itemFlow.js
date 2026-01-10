@@ -72,6 +72,7 @@ export async function handleCreateTeamItem({
   encryptedItemKeyWithIV.set(encryptedItemKeyBytes, itemKeyIv.length);
 
   const apiItem = await createTeamItem({
+    itemId,
     teamId,
     encryptedBlob: uint8ToBase64(encryptedBlobWithIV),
     encryptedItemKey: uint8ToBase64(encryptedItemKeyWithIV),
@@ -161,6 +162,7 @@ export async function handleCreatePersonalItem({
   encryptedItemKeyWithIV.set(encryptedItemKeyBytes, itemKeyIv.length);
 
   const apiItem = await createPersonalItem({
+    itemId,
     encryptedBlob: uint8ToBase64(encryptedBlobWithIV),
     encryptedItemKey: uint8ToBase64(encryptedItemKeyWithIV),
     keyVersion,

@@ -1,8 +1,9 @@
 import apiClient from "../api/axios";
 
-export const createTeamItem = async ({ teamId, encryptedBlob, encryptedItemKey, keyVersion }) => {
+export const createTeamItem = async ({ itemId, teamId, encryptedBlob, encryptedItemKey, keyVersion }) => {
     try {
         const response = await apiClient.post(`/teams/${teamId}/items`, {
+            id: itemId,
             encryptedBlob,
             encryptedItemKey,
             keyVersion
@@ -53,9 +54,10 @@ export const deleteTeamItem = async (teamId, itemId) => {
     }
 }
 
-export const createPersonalItem = async ({ encryptedBlob, encryptedItemKey, keyVersion }) => {
+export const createPersonalItem = async ({ itemId, encryptedBlob, encryptedItemKey, keyVersion }) => {
     try {
         const response = await apiClient.post(`/user/items`, {
+            id: itemId,
             encryptedBlob,
             encryptedItemKey,
             keyVersion
