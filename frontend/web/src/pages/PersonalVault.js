@@ -49,7 +49,7 @@ import {
 const secretTypes = ['password', 'api_key', 'note', 'credit_card', 'other'];
 
 const PersonalVault = () => {
-    const { currentUser } = useAuth();
+    const { currentUser, logout } = useAuth();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -77,12 +77,42 @@ const PersonalVault = () => {
         setLoading(true);
         setError('');
         try {
+            console.log('Loading personal items for user:', currentUser.id);
             const decryptedItems = await handleGetAllPersonalItems({
                 userId: currentUser.id,
             });
+            console.log('Loaded items:', decryptedItems);
+
+            // Check if any items failed to decrypt
+            const failedItems = decryptedItems.filter(item => item.decryptError);
+            if (failedItems.length > 0) {
+                console.error('Some items failed to decrypt:', failedItems);
+                const hasKeyError = failedItems.some(item =>
+                    item.decryptError?.includes('symmetric key not available')
+                );
+                const hasAuthError = failedItems.some(item =>
+                    item.decryptError?.includes('unable to authenticate data')
+                );
+
+                if (hasKeyError) {
+                    setError('KEYS_MISSING');
+                } else if (hasAuthError) {
+                    setError('CORRUPTED_ITEMS');
+                } else {
+                    setError(`${failedItems.length} item(s) could not be decrypted. There may be an issue with your encryption keys.`);
+                }
+            }
+
             setItems(decryptedItems);
         } catch (err) {
-            setError('Failed to load items: ' + err.message);
+            console.error('Failed to load items:', err);
+            if (err.message?.includes('symmetric key not available')) {
+                setError('KEYS_MISSING');
+            } else if (err.message?.includes('unable to authenticate data')) {
+                setError('CORRUPTED_ITEMS');
+            } else {
+                setError('Failed to load items: ' + err.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -228,8 +258,31 @@ const PersonalVault = () => {
             </Box>
 
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-                    {error}
+                <Alert
+                    severity={error === 'KEYS_MISSING' || error === 'CORRUPTED_ITEMS' ? 'warning' : 'error'}
+                    sx={{ mb: 2 }}
+                    onClose={() => setError('')}
+                    action={
+                        error === 'KEYS_MISSING' ? (
+                            <Button
+                                color="inherit"
+                                size="small"
+                                onClick={() => {
+                                    logout();
+                                    window.location.href = '/login';
+                                }}
+                            >
+                                LOG OUT
+                            </Button>
+                        ) : null
+                    }
+                >
+                    {error === 'KEYS_MISSING'
+                        ? '🔑 Your encryption keys are missing (lost after page refresh). Please log out and log back in to re-derive your keys.'
+                        : error === 'CORRUPTED_ITEMS'
+                            ? '⚠️ Some items were encrypted with incorrect keys (likely created after a page refresh). Delete these corrupted items and create new ones.'
+                            : error
+                    }
                 </Alert>
             )}
 

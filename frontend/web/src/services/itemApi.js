@@ -56,15 +56,21 @@ export const deleteTeamItem = async (teamId, itemId) => {
 
 export const createPersonalItem = async ({ itemId, encryptedBlob, encryptedItemKey, keyVersion }) => {
     try {
+        console.log('Creating personal item:', { itemId, keyVersion });
         const response = await apiClient.post(`/user/items`, {
             id: itemId,
             encryptedBlob,
             encryptedItemKey,
             keyVersion
         });
+        console.log('Personal item created successfully:', response.data);
         return response.data;
     } catch (error) {
-        console.log(error);
+        console.error('Failed to create personal item:', error);
+        if (error.response) {
+            throw new Error(error.response.data?.message || 'Failed to create item');
+        }
+        throw error;
     }
 }
 

@@ -42,23 +42,39 @@ const Dashboard = () => {
         setLoading(true);
         try {
             // Load personal items
-            const items = await handleGetAllPersonalItems({ userId: currentUser.id });
-            setPersonalItems(items || []);
+            try {
+                const items = await handleGetAllPersonalItems({ userId: currentUser.id });
+                setPersonalItems(items || []);
+            } catch (err) {
+                console.error('Failed to load personal items:', err);
+                setPersonalItems([]);
+            }
 
             // Load teams
-            const teamsData = await handleGetTeams();
-            setTeams(teamsData || []);
+            try {
+                const teamsData = await handleGetTeams();
+                // Handle both array and object with teams property
+                const teamsArray = Array.isArray(teamsData)
+                    ? teamsData
+                    : (teamsData?.teams || []);
+                setTeams(teamsArray);
 
-            // Load member info for each team
-            const membersMap = {};
-            for (const team of teamsData || []) {
-                try {
-                    membersMap[team.id] = await handleGetTeamMembers(team.id);
-                } catch (e) {
-                    membersMap[team.id] = [];
+                // Load member info for each team
+                const membersMap = {};
+                for (const team of teamsArray) {
+                    try {
+                        const members = await handleGetTeamMembers(team.id);
+                        membersMap[team.id] = Array.isArray(members) ? members : (members?.members || []);
+                    } catch (e) {
+                        console.error(`Failed to load members for team ${team.id}:`, e);
+                        membersMap[team.id] = [];
+                    }
                 }
+                setTeamMembersMap(membersMap);
+            } catch (err) {
+                console.error('Failed to load teams:', err);
+                setTeams([]);
             }
-            setTeamMembersMap(membersMap);
         } catch (err) {
             console.error('Failed to load dashboard data:', err);
         } finally {

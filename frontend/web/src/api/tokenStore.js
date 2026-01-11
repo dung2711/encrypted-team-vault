@@ -1,13 +1,15 @@
-let accessToken = null;
+const TOKEN_KEY = 'accessToken';
 
 export const tokenStore = {
     set(token) {
-        accessToken = token;
+        if (token) {
+            localStorage.setItem(TOKEN_KEY, token);
+        }
     },
     get() {
-        return accessToken;
+        return localStorage.getItem(TOKEN_KEY);
     },
     clear() {
-        accessToken = null;
+        localStorage.removeItem(TOKEN_KEY);
     }
 }

@@ -126,7 +126,7 @@ export async function handleAddMemberToTeam(teamId, newMemberEmail) {
     encryptedTeamKey: uint8ToBase64(encryptedForMember),
   };
 
-  const apiRes = await addMemberToTeam(teamId, body);
+  const apiRes = await addMemberToTeam(teamId, body.userId, body.encryptedTeamKey);
   return apiRes;
 }
 

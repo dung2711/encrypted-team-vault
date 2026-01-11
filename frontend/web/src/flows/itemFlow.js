@@ -228,6 +228,7 @@ export async function handleGetAllPersonalItems({ userId }) {
       const itemKeyIv = encryptedItemKeyWithIV.slice(0, 12);
       const encryptedItemKeyBytes = encryptedItemKeyWithIV.slice(12);
 
+      console.log('Decrypting item:', item.id);
       const plaintext = await decryptPersonalSecret({
         encryptedItemKeyBytes,
         itemKeyIv,

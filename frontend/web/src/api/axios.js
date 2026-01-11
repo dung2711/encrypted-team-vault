@@ -2,7 +2,7 @@ import axios from 'axios';
 import { tokenStore } from './tokenStore.js';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:5001/api', // Replace with your API base URL
+    baseURL: 'http://localhost:5000/api', // Replace with your API base URL
     timeout: 10000, // Request timeout
     headers: {
         'Content-Type': 'application/json',

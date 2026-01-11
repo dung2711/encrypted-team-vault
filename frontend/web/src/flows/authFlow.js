@@ -18,7 +18,7 @@ export async function handleRegistration({
   username,
   email,
   password,
-  autoLogin = true,
+  autoLogin = false,
 }) {
   const payload = await prepareRegistrationPayload({ username, email, password });
   const res = await register(payload);

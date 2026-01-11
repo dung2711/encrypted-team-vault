@@ -1,7 +1,8 @@
 import { genSymmetricKey } from "./keyGen.js";
 import { Crypto } from "@peculiar/webcrypto";
-const crypto = new Crypto();
 import { validateUint8Array, validateString, validateNumber } from './validation.js';
+
+const crypto = new Crypto();
 
 /**
     * Generates a new random item key for encrypting item data.

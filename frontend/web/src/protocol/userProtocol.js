@@ -41,11 +41,19 @@ export async function prepareRegistrationPayload({ username, email, password }) 
 }
 
 export async function createNewPersonalSecret({ secret, userId, keyVersion }) {
+    console.log('=== Creating Personal Secret ===');
+    console.log('userId:', userId, 'type:', typeof userId);
+    console.log('keyVersion:', keyVersion, 'type:', typeof keyVersion);
+    console.log('User symmetric key available:', !!keyStore.userSymmetricKey);
+    console.log('User symmetric key length:', keyStore.userSymmetricKey?.length);
+
     // Generate a new item key for the personal secret
     const itemKeyBytes = await genItemKey();
     const itemId = uuidv4();
+    console.log('Generated itemId:', itemId);
 
     // Encrypt the item key with the user's personal key
+    console.log('Encrypting item key with AAD: domain:user|userId:' + userId + '|itemId:' + itemId + '|keyVersion:' + keyVersion);
     const { encryptedItemKeyBytes, iv: itemKeyIv, aadBytes: itemKeyAad } = await encryptPersonalItemKey({
         itemKeyBytes,
         userKeyBytes: keyStore.userSymmetricKey,
@@ -53,15 +61,18 @@ export async function createNewPersonalSecret({ secret, userId, keyVersion }) {
         itemId,
         keyVersion
     });
+    console.log('Item key encrypted, length:', encryptedItemKeyBytes.length);
 
     // Encrypt the secret data with the item key
     const dataBytes = new TextEncoder().encode(secret);
+    console.log('Encrypting data with AAD: domain:data|itemId:' + itemId + '|keyVersion:' + keyVersion);
     const { encryptedDataBytes, iv: dataIv, aadBytes: dataAad } = await encryptData({
         dataBytes,
         itemKeyBytes,
         itemId,
         keyVersion
     });
+    console.log('Data encrypted, length:', encryptedDataBytes.length);
 
     return {
         itemId,
@@ -73,28 +84,57 @@ export async function createNewPersonalSecret({ secret, userId, keyVersion }) {
 }
 
 export async function decryptPersonalSecret({ encryptedItemKeyBytes, itemKeyIv, encryptedDataBytes, dataIv, userId, itemId, keyVersion }) {
-    // Decrypt the item key with the user's personal key
-    const itemKeyBytes = await decryptPersonalItemKey({
-        encryptedItemKeyBytes,
-        userKeyBytes: keyStore.userSymmetricKey,
-        userId,
-        itemId,
-        keyVersion,
-        iv: itemKeyIv
-    });
+    console.log('=== Decrypting Personal Secret ===');
+    console.log('itemId:', itemId, 'type:', typeof itemId);
+    console.log('userId:', userId, 'type:', typeof userId);
+    console.log('keyVersion:', keyVersion, 'type:', typeof keyVersion);
+    console.log('User symmetric key available:', !!keyStore.userSymmetricKey);
+    console.log('encryptedItemKeyBytes length:', encryptedItemKeyBytes?.length);
+    console.log('itemKeyIv length:', itemKeyIv?.length);
+    console.log('encryptedDataBytes length:', encryptedDataBytes?.length);
+    console.log('dataIv length:', dataIv?.length);
 
-    // Decrypt the secret data with the item key
-    const decryptedDataBytes = await decryptData({
-        encryptedDataBytes,
-        itemKeyBytes,
-        itemId,
-        keyVersion,
-        iv: dataIv
-    });
+    if (!keyStore.userSymmetricKey) {
+        throw new Error('User symmetric key not available. Please log in again.');
+    }
 
-    return new TextDecoder().decode(decryptedDataBytes);
+    try {
+        console.log('Step 1: Decrypting item key...');
+        console.log('Constructing AAD: domain:user|userId:' + userId + '|itemId:' + itemId + '|keyVersion:' + keyVersion);
+
+        // Decrypt the item key with the user's personal key
+        const itemKeyBytes = await decryptPersonalItemKey({
+            encryptedItemKeyBytes,
+            userKeyBytes: keyStore.userSymmetricKey,
+            userId,
+            itemId,
+            keyVersion,
+            iv: itemKeyIv
+        });
+        console.log('Step 1: Item key decrypted successfully, length:', itemKeyBytes.length);
+
+        console.log('Step 2: Decrypting data...');
+        console.log('Constructing AAD: domain:data|itemId:' + itemId + '|keyVersion:' + keyVersion);
+
+        // Decrypt the secret data with the item key
+        const decryptedDataBytes = await decryptData({
+            encryptedDataBytes,
+            itemKeyBytes,
+            itemId,
+            keyVersion,
+            iv: dataIv
+        });
+        console.log('Step 2: Data decrypted successfully');
+
+        const result = new TextDecoder().decode(decryptedDataBytes);
+        console.log('Decryption complete');
+        return result;
+    } catch (error) {
+        console.error('Decryption failed:', error.message);
+        console.error('Error stack:', error.stack);
+        throw error;
+    }
 }
-
 /**
  * Update existing personal secret (re-encrypt with new data)
  * Can reuse the same item key or generate a new one
@@ -157,4 +197,3 @@ export async function updatePersonalSecret({
         dataIv,
     };
 }
-

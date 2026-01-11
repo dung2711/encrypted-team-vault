@@ -57,24 +57,32 @@ const TeamList = () => {
         setError('');
         try {
             const teamsData = await handleGetTeams();
-            setTeams(teamsData || []);
+            // Handle both array and object with teams property
+            const teamsArray = Array.isArray(teamsData)
+                ? teamsData
+                : (teamsData?.teams || []);
+            setTeams(teamsArray);
 
             // Load stats for each team (members count, items count)
             const stats = {};
-            for (const team of teamsData || []) {
+            for (const team of teamsArray) {
                 try {
-                    const members = await handleGetTeamMembers(team.id);
+                    const membersData = await handleGetTeamMembers(team.id);
+                    const members = Array.isArray(membersData) ? membersData : (membersData?.members || []);
                     stats[team.id] = {
-                        members: members || [],
+                        members: members,
                         itemCount: 0, // Will be loaded when user enters team
                     };
                 } catch (e) {
+                    console.error(`Failed to load stats for team ${team.id}:`, e);
                     stats[team.id] = { members: [], itemCount: 0 };
                 }
             }
             setTeamStats(stats);
         } catch (err) {
+            console.error('Failed to load teams:', err);
             setError('Failed to load teams: ' + err.message);
+            setTeams([]);
         } finally {
             setLoading(false);
         }
