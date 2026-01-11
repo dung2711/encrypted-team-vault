@@ -2,10 +2,13 @@ import apiClient from "../api/axios";
 
 export const createTeam = async (teamData) => {
     try {
+        console.log('Creating team with data:', teamData);
         const response = await apiClient.post('/teams', teamData);
+        console.log('Team created successfully:', response.data);
         return response.data;
     } catch (error) {
-        console.log(error);
+        console.error('Team creation failed:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to create team');
     }
 }
 

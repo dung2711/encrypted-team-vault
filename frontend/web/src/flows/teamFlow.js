@@ -70,8 +70,8 @@ export async function handleCreateTeam(teamName) {
 
   const apiTeam = await createTeam({
     id: teamId,
-    name: teamName,
-    encryptedTeamKey: uint8ToBase64(encryptedTeamKeyForCreator),
+    teamName: teamName,
+    encryptedTeamKeyForCreator: uint8ToBase64(encryptedTeamKeyForCreator),
   });
 
   return {
