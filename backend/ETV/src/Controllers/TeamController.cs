@@ -76,15 +76,26 @@ namespace ETV.Controllers
 
             var teams = await teamService.GetJoinedTeamsAsync(userId);
 
+            var teamList = new List<object>();
+            foreach (var team in teams)
+            {
+                var creatorId = await teamService.GetTeamCreatorIdAsync(team.TeamId);
+                var currentUserRole = await teamService.GetUserRoleInTeamAsync(team.TeamId, userId);
+
+                teamList.Add(new
+                {
+                    id = team.TeamId,
+                    name = team.TeamName,
+                    createdAt = team.CreatedAt,
+                    createdBy = creatorId,
+                    currentUserRole = currentUserRole.ToString().ToLower()
+                });
+            }
+
             return Ok(new
             {
                 count = teams.Count,
-                teams = teams.Select(t => new
-                {
-                    id = t.TeamId,
-                    name = t.TeamName,
-                    createdAt = t.CreatedAt
-                })
+                teams = teamList
             });
         }
 

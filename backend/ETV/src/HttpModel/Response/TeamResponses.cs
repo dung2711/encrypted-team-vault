@@ -12,6 +12,8 @@ public class GetTeamResponse
     public Guid Id { get; set; }
     public required string Name { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid CreatedBy { get; set; }
+    public required string CurrentUserRole { get; set; }
 }
 
 public class GetTeamsListResponse
