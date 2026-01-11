@@ -130,6 +130,7 @@ namespace ETV.Controllers
                 {
                     UserId = user.Id,
                     Username = user.Username,
+                    Email = user.Email,
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
                     ExpiresIn = expiresInSeconds,

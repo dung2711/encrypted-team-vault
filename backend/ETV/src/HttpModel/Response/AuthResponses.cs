@@ -4,6 +4,7 @@ public class LoginResponse
 {
     public Guid UserId { get; set; }
     public required string Username { get; set; }
+    public required string Email { get; set; }
     public required string AccessToken { get; set; }
     public required string RefreshToken { get; set; }
     public long ExpiresIn { get; set; }
