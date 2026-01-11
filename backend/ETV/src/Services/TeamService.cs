@@ -49,6 +49,36 @@ public class TeamService(AppDb context)
     }
 
     /// <summary>
+    /// Lấy userId của người tạo team (admin đầu tiên)
+    /// </summary>
+    public async Task<Guid> GetTeamCreatorIdAsync(Guid teamId)
+    {
+        var creator = await context.TeamMembers
+            .Where(tm => tm.TeamId == teamId && tm.Role == Role.Admin)
+            .OrderBy(tm => tm.JoinedAt)
+            .Select(tm => tm.UserId)
+            .FirstOrDefaultAsync();
+
+        return creator;
+    }
+
+    /// <summary>
+    /// Lấy role của user trong team
+    /// </summary>
+    public async Task<Role> GetUserRoleInTeamAsync(Guid teamId, Guid userId)
+    {
+        var member = await context.TeamMembers
+            .FirstOrDefaultAsync(tm => tm.TeamId == teamId && tm.UserId == userId);
+
+        if (member == null)
+        {
+            throw new NotFoundException("TeamMember", userId);
+        }
+
+        return member.Role;
+    }
+
+    /// <summary>
     /// Lấy danh sách các team mà user đã tham gia
     /// </summary>
     public async Task<List<Team>> GetJoinedTeamsAsync(Guid userId)

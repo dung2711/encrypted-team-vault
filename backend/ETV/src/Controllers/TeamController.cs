@@ -113,12 +113,16 @@ namespace ETV.Controllers
             }
 
             var team = await teamService.GetTeamDetailsAsync(teamId);
+            var creatorId = await teamService.GetTeamCreatorIdAsync(teamId);
+            var currentUserRole = await teamService.GetUserRoleInTeamAsync(teamId, userId);
 
             return Ok(new
             {
                 id = team.TeamId,
                 name = team.TeamName,
-                createdAt = team.CreatedAt
+                createdAt = team.CreatedAt,
+                createdBy = creatorId,
+                currentUserRole = currentUserRole.ToString().ToLower()
             });
         }
 
