@@ -102,7 +102,7 @@ const TeamDetail = () => {
         notes: '',
     });
 
-    const [memberEmail, setMemberEmail] = useState('');
+    const [memberUserId, setMemberUserId] = useState('');
     const [memberRole, setMemberRole] = useState('member');
     const [memberError, setMemberError] = useState('');
     const [teamFormData, setTeamFormData] = useState({ name: '', description: '' });
@@ -289,12 +289,9 @@ const TeamDetail = () => {
         setSaving(true);
 
         try {
-            // In real implementation, need to find user by email first
-            // For now, we'll assume the email is actually a userId or search API exists
-            // This would need a searchUserByEmail API
-            const result = await handleAddMemberToTeam(teamId, memberEmail);
+            const result = await handleAddMemberToTeam(teamId, memberUserId);
 
-            setMemberEmail('');
+            setMemberUserId('');
             setMemberRole('member');
             setMemberDialogOpen(false);
             await loadTeamData();
@@ -306,7 +303,7 @@ const TeamDetail = () => {
     };
 
     const handleOpenMemberDialog = () => {
-        setMemberEmail('');
+        setMemberUserId('');
         setMemberRole('member');
         setMemberError('');
         setMemberDialogOpen(true);
@@ -637,9 +634,10 @@ const TeamDetail = () => {
                         <TextField
                             fullWidth
                             label="User ID"
-                            value={memberEmail}
-                            onChange={(e) => { setMemberEmail(e.target.value); setMemberError(''); }}
-                            placeholder="User ID"
+                            value={memberUserId}
+                            onChange={(e) => { setMemberUserId(e.target.value); setMemberError(''); }}
+                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                            helperText="Enter the UUID of the user to add"
                         />
                         <FormControl fullWidth>
                             <InputLabel>Role</InputLabel>
@@ -656,7 +654,7 @@ const TeamDetail = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setMemberDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleAddMember} disabled={!memberEmail || saving}>
+                    <Button variant="contained" onClick={handleAddMember} disabled={!memberUserId || saving}>
                         {saving ? <CircularProgress size={20} /> : 'Add Member'}
                     </Button>
                 </DialogActions>

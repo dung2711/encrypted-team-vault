@@ -22,6 +22,8 @@ import {
     Key as KeyIcon,
     ArrowForward as ArrowForwardIcon,
     Visibility as VisibilityIcon,
+    ContentCopy as CopyIcon,
+    Person as PersonIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { handleGetTeams, handleGetTeamMembers } from '../flows/teamFlow';
@@ -35,6 +37,7 @@ const Dashboard = () => {
     const [personalItems, setPersonalItems] = useState([]);
     const [teams, setTeams] = useState([]);
     const [teamMembersMap, setTeamMembersMap] = useState({});
+    const [copied, setCopied] = useState(false);
 
     const loadData = useCallback(async () => {
         if (!currentUser?.id) return;
@@ -97,6 +100,14 @@ const Dashboard = () => {
     // Calculate total team items (would need to load from each team)
     const totalTeamItems = 0; // Simplified - would need to track this
 
+    const handleCopyUserId = () => {
+        if (currentUser?.id) {
+            navigator.clipboard.writeText(currentUser.id);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
     const stats = [
         {
             title: 'Personal Secrets',
@@ -133,6 +144,61 @@ const Dashboard = () => {
                     </Typography>
                 </Box>
             </Box>
+
+            {/* User Info Card */}
+            <Card sx={{ mb: 4, bgcolor: 'primary.main', color: 'white' }}>
+                <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                            sx={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <PersonIcon sx={{ fontSize: 32 }} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                                {currentUser?.username || 'User'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                                {currentUser?.email || 'No email'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                <Typography variant="caption" sx={{ opacity: 0.8, fontFamily: 'monospace' }}>
+                                    User ID: {currentUser?.id || 'N/A'}
+                                </Typography>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleCopyUserId}
+                                    sx={{
+                                        color: 'white',
+                                        '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)' },
+                                    }}
+                                >
+                                    <CopyIcon fontSize="small" />
+                                </IconButton>
+                                {copied && (
+                                    <Chip
+                                        label="Copied!"
+                                        size="small"
+                                        sx={{
+                                            bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                            color: 'white',
+                                            height: 24,
+                                        }}
+                                    />
+                                )}
+                            </Box>
+                        </Box>
+                    </Box>
+                </CardContent>
+            </Card>
 
             {/* Stats Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>

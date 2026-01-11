@@ -5,7 +5,8 @@ export const getUserInfo = async (id) => {
         const response = await apiClient.get(`/user/${id}`);
         return response.data;
     } catch (error) {
-        console.log(error);
+        console.error('Failed to get user info:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to get user info');
     }
 }
 export const getUserByEmail = async (email) => {
@@ -32,6 +33,7 @@ export const getUserPublicKey = async (userId) => {
         const response = await apiClient.get(`/user/${userId}/publickey`);
         return response.data;  // Returns { userId, publicKey }
     } catch (error) {
-        console.log(error);
+        console.error('Failed to get user public key:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to get user public key');
     }
 }
