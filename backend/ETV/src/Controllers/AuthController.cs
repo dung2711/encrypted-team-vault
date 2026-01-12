@@ -332,8 +332,8 @@ namespace ETV.Controllers
                 await _teamService.UpdateUserTeamKeysAsync(userId, teamKeys);
 
                 // Update personal item keys
-                var itemKeys = request.ReEncryptedItemKeys
-                    .Select(ik => (ik.ItemId, ik.EncryptedItemKey))
+                var itemKeys = request.ReEncryptedPersonalItemKeys
+                    .Select(ik => (ik.ItemId, ik.EncryptedItemKey, ik.KeyVersion))
                     .ToList();
 
                 var allItemsUpdated = await _userService.UpdateUserPersonalItemKeysAsync(userId, itemKeys);

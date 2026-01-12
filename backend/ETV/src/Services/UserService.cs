@@ -254,12 +254,12 @@ namespace ETV.src.Services
         /// Dùng khi user đổi mật khẩu và cần re-encrypt personal item keys
         /// Kiểm tra tất cả items được cung cấp đều tồn tại và thuộc về user
         /// </summary>
-        public async Task<bool> UpdateUserPersonalItemKeysAsync(Guid userId, List<(Guid ItemId, string EncryptedItemKey)> itemKeys)
+        public async Task<bool> UpdateUserPersonalItemKeysAsync(Guid userId, List<(Guid ItemId, string EncryptedItemKey, int KeyVersion)> itemKeys)
         {
             var itemsToUpdate = itemKeys.Count;
             var itemsUpdated = 0;
 
-            foreach (var (itemId, encryptedItemKey) in itemKeys)
+            foreach (var (itemId, encryptedItemKey, keyVersion) in itemKeys)
             {
                 // Kiểm tra personal item thuộc về user này (TeamId phải null)
                 var personalItem = await _context.VaultItems
@@ -268,6 +268,7 @@ namespace ETV.src.Services
                 if (personalItem != null)
                 {
                     personalItem.EncryptedItemKey = encryptedItemKey;
+                    personalItem.KeyVersion = keyVersion;
                     personalItem.UpdatedAt = DateTimeOffset.UtcNow;
                     itemsUpdated++;
                 }

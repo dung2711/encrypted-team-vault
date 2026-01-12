@@ -27,7 +27,7 @@ public class ChangePasswordRequest
     /// <summary>List of re-encrypted team keys for all teams the user is a member of</summary>
     public required List<ReEncryptedTeamKey> ReEncryptedTeamKeys { get; set; }
     /// <summary>List of re-encrypted personal item keys. Can be empty array if user has no personal items.</summary>
-    public required List<ReEncryptedItemKey> ReEncryptedItemKeys { get; set; }
+    public required List<ReEncryptedPersonalItemKey> ReEncryptedPersonalItemKeys { get; set; }
 }
 
 public class ReEncryptedTeamKey
@@ -37,8 +37,9 @@ public class ReEncryptedTeamKey
     public int KeyVersion { get; set; }
 }
 
-public class ReEncryptedItemKey
+public class ReEncryptedPersonalItemKey
 {
     public Guid ItemId { get; set; }
     public required string EncryptedItemKey { get; set; }
+    public int KeyVersion { get; set; }
 }
