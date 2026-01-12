@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Card,
@@ -16,13 +17,12 @@ import {
     Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { useKeyStore } from '../context/KeyStoreContext';
 import { updateUserInfo } from '../services/userApi';
 import { handleChangePassword } from '../flows/authFlow';
 
 const Settings = () => {
-    const { currentUser } = useAuth();
-    const { getUserKeys } = useKeyStore();
+    const navigate = useNavigate();
+    const { currentUser, logout } = useAuth();
     const [profileData, setProfileData] = useState({
         username: currentUser?.username || '',
         email: currentUser?.email || '',
@@ -68,11 +68,11 @@ const Settings = () => {
                 userId: currentUser.id,
                 oldPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword,
-                getUserKeysFromContext: getUserKeys,
             });
             setSaveSuccess('Password changed successfully. All your vault data has been re-encrypted.');
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            setTimeout(() => setSaveSuccess(''), 5000);
+            setTimeout(() => setSaveSuccess(''), 1000);
+            setTimeout(async () => { await logout(); navigate('/login') }, 1500);
         } catch (err) {
             setError(err.message || 'Failed to change password');
         } finally {

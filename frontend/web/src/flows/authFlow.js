@@ -6,8 +6,9 @@ import { getTeams, getEncryptedTeamKey } from "../services/teamApi.js";
 import { getPersonalItems } from "../services/itemApi.js"
 import { prepareRegistrationPayload, prepareChangePassWordPayload } from "../protocol/userProtocol.js";
 import { decryptTeamKeyForUser, prepareTeamKeyForNewMember } from "../protocol/teamProtocol.js";
-import { decryptPersonalItemKey, encryptPersonalItemKey } from "../protocol/userProtocol.js";
+import { decryptPersonalItemKey, encryptPersonalItemKey } from "../crypto/index.js";
 import { deriveUserKeysWhenLogin, clearUserKeys, deriveUserKeysToChangePassword } from "../protocol/authProtocol.js";
+import { keyStore } from "../protocol/keyStore.js";
 import { tokenStore } from "../api/tokenStore.js";
 
 const base64ToUint8 = (base64) =>
@@ -93,21 +94,21 @@ export async function handleLogout({ refreshToken } = {}) {
   await clearUserKeys();
 }
 
-export async function handleChangePassword({ userId, oldPassword, newPassword, getUserKeysFromContext }) {
-  // Get current keys from keyStore (passed from component)
-  const currentKeys = getUserKeysFromContext();
-  const currentAsymmetricKeyPair = currentKeys.asymmetricKeyPair;
-  const currentSymmetricKey = currentKeys.symmetricKey;
+export async function handleChangePassword({ userId, oldPassword, newPassword }) {
+  // Get current keys from keyStore (populated during login)
+  const currentAsymmetricKeyPair = keyStore.userAsymmetricKeyPair;
+  const currentSymmetricKey = keyStore.userSymmetricKey;
 
-  if (!currentAsymmetricKeyPair || !currentSymmetricKey) {
+  if (!currentAsymmetricKeyPair?.privateKey || !currentSymmetricKey) {
     throw new Error("Current user keys not found in keyStore. Please log in again.");
   }
 
   // Derive new keys from new password
   const { publicKey, kdfSalt } = await prepareChangePassWordPayload({ newPassword });
+  // Note: kdfSalt and publicKey are already base64 strings from prepareChangePassWordPayload
   const { asymmetricKeyPair: newAsymmetricKeyPair, symmetricKey: newSymmetricKey } = await deriveUserKeysToChangePassword({
     password: newPassword,
-    salt: kdfSalt,
+    salt: base64ToUint8(kdfSalt),  // Convert base64 string to Uint8Array for key derivation
   });
 
   // Get current teamKeys and re-encrypt them with new keys
@@ -137,19 +138,21 @@ export async function handleChangePassword({ userId, oldPassword, newPassword, g
 
   const newEncryptedTeamKeys = await Promise.all(
     currentDecryptedTeamKeys.map(async ({ teamId, teamKey, currentKeyVersion }) => {
-      // Re-encrypt teamKey with new user keys
+      // Re-encrypt teamKey with new user's public key
+      // IMPORTANT: Keep the same keyVersion! The team key itself hasn't changed,
+      // only the wrapper (user's asymmetric key) changed.
       const encryptedTeamKeyBytes = await prepareTeamKeyForNewMember({
         teamKeyBytes: teamKey,
         memberPublicKeyBytes: newAsymmetricKeyPair.publicKey,
         teamId: teamId,
         memberId: userId,
-        keyVersion: currentKeyVersion + 1
+        keyVersion: currentKeyVersion  // Keep same version, don't increment!
       });
 
       return {
         teamId: teamId,
         encryptedTeamKey: uint8ToBase64(encryptedTeamKeyBytes),
-        keyVersion: currentKeyVersion + 1,
+        keyVersion: currentKeyVersion,  // Keep same version
       };
     })
   );
@@ -185,12 +188,14 @@ export async function handleChangePassword({ userId, oldPassword, newPassword, g
   const newEncryptedPersonalItemKeys = await Promise.all(
     currentDecryptedPersonalItemKeys.map(async ({ itemId, itemKey, currentKeyVersion }) => {
       // Re-encrypt itemKey with new user keys
+      // IMPORTANT: Keep the same keyVersion! The encrypted data blob uses keyVersion in its AAD,
+      // and we're NOT re-encrypting the data, only the item key wrapper.
       const { encryptedItemKeyBytes, iv: itemKeyIv } = await encryptPersonalItemKey({
         itemKeyBytes: itemKey,
         userKeyBytes: newSymmetricKey,
         userId,
         itemId,
-        keyVersion: currentKeyVersion + 1
+        keyVersion: currentKeyVersion  // Keep same version, don't increment!
       });
 
       const encryptedItemKeyWithIV = new Uint8Array(
@@ -202,17 +207,18 @@ export async function handleChangePassword({ userId, oldPassword, newPassword, g
       return {
         itemId,
         encryptedItemKey: uint8ToBase64(encryptedItemKeyWithIV),
-        keyVersion: currentKeyVersion + 1,
+        keyVersion: currentKeyVersion,  // Keep same version
       };
     })
   );
 
   // Call change password API
+  // Note: kdfSalt and publicKey are already base64 strings, don't encode again!
   await change_password({
     oldPassword,
     newPassword,
-    kdfSalt: uint8ToBase64(kdfSalt),
-    publicKey: uint8ToBase64(publicKey),
+    kdfSalt: kdfSalt,  // Already base64 string
+    publicKey: publicKey,  // Already base64 string
     reEncryptedTeamKeys: newEncryptedTeamKeys,
     reEncryptedPersonalItemKeys: newEncryptedPersonalItemKeys,
   });
