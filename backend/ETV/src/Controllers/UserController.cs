@@ -86,6 +86,39 @@ namespace ETV.Controllers
         }
 
         /// <summary>
+        /// Get user by email address
+        /// </summary>
+        /// <remarks>
+        /// Returns user profile information for a given email address.
+        /// Useful for finding users without knowing their ID.
+        /// </remarks>
+        /// <param name="email">User email address</param>
+        /// <returns>User profile information</returns>
+        /// <response code="200">User profile retrieved successfully</response>
+        /// <response code="401">Unauthorized - requires valid JWT token</response>
+        /// <response code="404">User with given email not found</response>
+        [Authorize]
+        [HttpGet("by-email")]
+        [ProducesResponseType(typeof(GetUserResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUserByEmail([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return BadRequest(new { message = "Email query parameter is required." });
+            }
+
+            var user = await _userService.GetUserByEmailAsync(email);
+
+            return Ok(new
+            {
+                id = user.Id,
+                username = user.Username,
+                email = user.Email,
+                createdAt = user.CreatedAt
+            });
+        }
+
+        /// <summary>
         /// Update user profile information
         /// </summary>
         /// <remarks>

@@ -248,5 +248,40 @@ namespace ETV.src.Services
             user.KDFSalt = kdfSalt;
             await _context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// Cập nhật encrypted item keys cho personal items của user
+        /// Dùng khi user đổi mật khẩu và cần re-encrypt personal item keys
+        /// Kiểm tra tất cả items được cung cấp đều tồn tại và thuộc về user
+        /// </summary>
+        public async Task<bool> UpdateUserPersonalItemKeysAsync(Guid userId, List<(Guid ItemId, string EncryptedItemKey)> itemKeys)
+        {
+            var itemsToUpdate = itemKeys.Count;
+            var itemsUpdated = 0;
+
+            foreach (var (itemId, encryptedItemKey) in itemKeys)
+            {
+                // Kiểm tra personal item thuộc về user này (TeamId phải null)
+                var personalItem = await _context.VaultItems
+                    .FirstOrDefaultAsync(vi => vi.Id == itemId && vi.UserId == userId && vi.TeamId == null);
+
+                if (personalItem != null)
+                {
+                    personalItem.EncryptedItemKey = encryptedItemKey;
+                    personalItem.UpdatedAt = DateTimeOffset.UtcNow;
+                    itemsUpdated++;
+                }
+            }
+
+            // Nếu có items cần update, kiểm tra tất cả được tìm thấy
+            if (itemsToUpdate > 0 && itemsUpdated != itemsToUpdate)
+            {
+                // Không update nếu không tìm thấy tất cả items
+                return false;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

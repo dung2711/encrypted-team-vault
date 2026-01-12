@@ -331,6 +331,18 @@ namespace ETV.Controllers
                     .ToList();
                 await _teamService.UpdateUserTeamKeysAsync(userId, teamKeys);
 
+                // Update personal item keys
+                var itemKeys = request.ReEncryptedItemKeys
+                    .Select(ik => (ik.ItemId, ik.EncryptedItemKey))
+                    .ToList();
+
+                var allItemsUpdated = await _userService.UpdateUserPersonalItemKeysAsync(userId, itemKeys);
+                if (!allItemsUpdated)
+                {
+                    _logger.LogWarning("Not all personal items were updated for user {UserId}", userId);
+                    return BadRequest(new { message = "Failed to update all personal items. Some items were not found or do not belong to this user." });
+                }
+
                 // Invalidate all refresh tokens (force re-login)
                 var userRefreshTokens = await _db.RefreshTokens
                     .Where(rt => rt.UserId == userId)
@@ -339,8 +351,8 @@ namespace ETV.Controllers
                 _db.RefreshTokens.RemoveRange(userRefreshTokens);
                 await _db.SaveChangesAsync();
 
-                _logger.LogInformation("Password, key materials, and team keys changed for user {UserId}. All refresh tokens invalidated.", userId);
-                return Ok(new ChangePasswordResponse { Message = "Password, key materials, and team keys updated successfully. Please login again with your new password." });
+                _logger.LogInformation("Password, key materials, team keys, and personal item keys changed for user {UserId}. All refresh tokens invalidated.", userId);
+                return Ok(new ChangePasswordResponse { Message = "Password, key materials, team keys, and personal item keys updated successfully. Please login again with your new password." });
             }
             catch (NotFoundException)
             {
