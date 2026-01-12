@@ -49,5 +49,17 @@ export const logout = async () => {
 }
 
 export const change_password = async (passwordPayload) => {
-
+    try {
+        const response = await apiClient.post('/auth/change-password', passwordPayload);
+        return response.data;
+    } catch (error) {
+        console.error('Change Password API error:', error);
+        if (error.response) {
+            throw new Error(error.response.data?.message || 'Change password failed');
+        } else if (error.request) {
+            throw new Error('Cannot connect to server. Please check if backend is running.');
+        } else {
+            throw new Error(error.message || 'Change password failed');
+        }
+    }
 }
