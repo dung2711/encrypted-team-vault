@@ -47,3 +47,7 @@ export const logout = async () => {
         return null;
     }
 }
+
+export const change_password = async (passwordPayload) => {
+
+}

@@ -102,7 +102,7 @@ const TeamDetail = () => {
         notes: '',
     });
 
-    const [memberUserId, setMemberUserId] = useState('');
+    const [memberEmail, setMemberEmail] = useState('');
     const [memberRole, setMemberRole] = useState('member');
     const [memberError, setMemberError] = useState('');
     const [teamFormData, setTeamFormData] = useState({ name: '', description: '' });
@@ -289,9 +289,9 @@ const TeamDetail = () => {
         setSaving(true);
 
         try {
-            const result = await handleAddMemberToTeam(teamId, memberUserId);
+            const result = await handleAddMemberToTeam(teamId, memberEmail);
 
-            setMemberUserId('');
+            setMemberEmail('');
             setMemberRole('member');
             setMemberDialogOpen(false);
             await loadTeamData();
@@ -303,7 +303,7 @@ const TeamDetail = () => {
     };
 
     const handleOpenMemberDialog = () => {
-        setMemberUserId('');
+        setMemberEmail('');
         setMemberRole('member');
         setMemberError('');
         setMemberDialogOpen(true);
@@ -623,7 +623,7 @@ const TeamDetail = () => {
                 <DialogTitle>Add Team Member</DialogTitle>
                 <DialogContent>
                     <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
-                        Enter the user ID of a registered user to add them to the team.
+                        Enter the email address of a registered user to add them to the team.
                     </Alert>
                     {memberError && (
                         <Alert severity="error" sx={{ mb: 2 }}>
@@ -633,11 +633,12 @@ const TeamDetail = () => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <TextField
                             fullWidth
-                            label="User ID"
-                            value={memberUserId}
-                            onChange={(e) => { setMemberUserId(e.target.value); setMemberError(''); }}
-                            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                            helperText="Enter the UUID of the user to add"
+                            label="Email"
+                            type="email"
+                            value={memberEmail}
+                            onChange={(e) => { setMemberEmail(e.target.value); setMemberError(''); }}
+                            placeholder="user@example.com"
+                            helperText="Enter the email of the user to add"
                         />
                         <FormControl fullWidth>
                             <InputLabel>Role</InputLabel>
@@ -654,7 +655,7 @@ const TeamDetail = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setMemberDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleAddMember} disabled={!memberUserId || saving}>
+                    <Button variant="contained" onClick={handleAddMember} disabled={!memberEmail || saving}>
                         {saving ? <CircularProgress size={20} /> : 'Add Member'}
                     </Button>
                 </DialogActions>

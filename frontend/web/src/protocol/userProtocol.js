@@ -40,6 +40,26 @@ export async function prepareRegistrationPayload({ username, email, password }) 
     };
 }
 
+export async function prepareChangePassWordPayload({ newPassword }) {
+    // Generate random salt (16 bytes)
+    const saltBytes = new Uint8Array(randomBytes(16));
+
+    // Derive master key from new password + salt
+    const masterKeyBytes = await deriveMasterKey(newPassword, saltBytes);
+
+    // Derive public key (private key will be derived fresh on each login)
+    const { publicKey } = await deriveUserAsymmetricKeyPair(masterKeyBytes);
+
+    // Convert to base64 for transmission
+    const toBase64 = (bytes) => Buffer.from(bytes).toString('base64');
+
+    return {
+        newPassword, // Backend needs this for its own hashing
+        publicKey: toBase64(publicKey),
+        kdfSalt: toBase64(saltBytes)
+    };
+}
+
 export async function createNewPersonalSecret({ secret, userId, keyVersion }) {
     console.log('=== Creating Personal Secret ===');
     console.log('userId:', userId, 'type:', typeof userId);

@@ -8,6 +8,7 @@ import {
     Button,
     Alert,
     Avatar,
+    CircularProgress,
 } from '@mui/material';
 import {
     Person as PersonIcon,
@@ -15,10 +16,13 @@ import {
     Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { useKeyStore } from '../context/KeyStoreContext';
 import { updateUserInfo } from '../services/userApi';
+import { handleChangePassword } from '../flows/authFlow';
 
 const Settings = () => {
     const { currentUser } = useAuth();
+    const { getUserKeys } = useKeyStore();
     const [profileData, setProfileData] = useState({
         username: currentUser?.username || '',
         email: currentUser?.email || '',
@@ -31,6 +35,7 @@ const Settings = () => {
     const [saveSuccess, setSaveSuccess] = useState('');
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [changingPassword, setChangingPassword] = useState(false);
 
     const handleSaveProfile = async () => {
         setSaving(true);
@@ -46,7 +51,7 @@ const Settings = () => {
         }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePasswordSubmit = async () => {
         setError('');
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setError('New passwords do not match');
@@ -56,11 +61,23 @@ const Settings = () => {
             setError('Password must be at least 8 characters');
             return;
         }
-        // In real app, this would re-derive keys with new password
-        // This is a complex operation that needs proper flow implementation
-        setSaveSuccess('Password changed successfully');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setTimeout(() => setSaveSuccess(''), 3000);
+
+        setChangingPassword(true);
+        try {
+            await handleChangePassword({
+                userId: currentUser.id,
+                oldPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+                getUserKeysFromContext: getUserKeys,
+            });
+            setSaveSuccess('Password changed successfully. All your vault data has been re-encrypted.');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setTimeout(() => setSaveSuccess(''), 5000);
+        } catch (err) {
+            setError(err.message || 'Failed to change password');
+        } finally {
+            setChangingPassword(false);
+        }
     };
 
     return (
@@ -154,10 +171,10 @@ const Settings = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Button
                                 variant="contained"
-                                onClick={handleChangePassword}
-                                disabled={!passwordData.currentPassword || !passwordData.newPassword}
+                                onClick={handleChangePasswordSubmit}
+                                disabled={!passwordData.currentPassword || !passwordData.newPassword || changingPassword}
                             >
-                                Change Password
+                                {changingPassword ? <CircularProgress size={20} /> : 'Change Password'}
                             </Button>
                         </Box>
                     </Box>

@@ -11,7 +11,7 @@ import {
   updateTeamKeyFor1Member,
   getTeamMembers
 } from "../services/teamApi.js";
-import { getUserPublicKey, getUserInfo } from "../services/userApi.js";
+import { getUserPublicKey, getUserByEmail } from "../services/userApi.js";
 import {
   createNewTeam,
   decryptTeamKeyForUser,
@@ -119,16 +119,19 @@ export async function handleLoadTeamKey(teamId) {
 
 /**
  * Thêm member vào team:
+ * - Tìm user theo email
  * - decrypt teamKey của admin hiện tại
  * - get publicKey của member mới
  * - encryptTeamKey cho member
  * - gọi addMemberToTeam với userId + encryptedTeamKey
  */
-export async function handleAddMemberToTeam(teamId, newMemberUserId) {
-  // Validate userId is a valid UUID
-  if (!newMemberUserId || newMemberUserId.length !== 36) {
-    throw new Error("Invalid user ID format");
+export async function handleAddMemberToTeam(teamId, memberEmail) {
+  // Find user by email
+  const userInfo = await getUserByEmail(memberEmail);
+  if (!userInfo || !userInfo.id) {
+    throw new Error("Cannot find user with email: " + memberEmail);
   }
+  const newMemberUserId = userInfo.id;
 
   // 1. Lấy encryptedTeamKey cho current user
   const res = await getEncryptedTeamKey(teamId);

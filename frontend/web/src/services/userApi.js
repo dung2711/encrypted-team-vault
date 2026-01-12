@@ -16,7 +16,8 @@ export const getUserByEmail = async (email) => {
         });
         return response.data;
     } catch (error) {
-        console.log(error);
+        console.error('Failed to get user by email:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'User not found with this email');
     }
 };
 export const updateUserInfo = async (id, userInfo) => {
